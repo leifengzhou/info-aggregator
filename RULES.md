@@ -102,6 +102,12 @@ dev claims task -> implements -> runs tests -> hands off to QA
 QA validates against acceptance criteria -> signs off or rejects back to dev
 ```
 
+## Test Ownership
+
+- **Dev** writes unit tests alongside implementation — they are part of production-quality code
+- **QA** writes acceptance, smoke, and integration test plans and scripts — validation against acceptance criteria
+- Dev runs all existing tests before handoff; QA runs their own validation on top
+
 ## Core Principles
 
 - **Simplicity First**: Make every change as simple as possible. Impact minimal code.

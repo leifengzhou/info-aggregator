@@ -24,6 +24,7 @@
 - Avoid schema changes without architect sign-off
 - Keep adapters contract-compliant
 - Prefer deterministic behavior and explicit error handling
+- Write unit tests for your implementation — they ship with the code
 
 ## Git
 - Commit at task handoff (`in_review`) using `P1-XXX: description` format
