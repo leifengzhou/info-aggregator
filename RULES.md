@@ -87,11 +87,12 @@ Every agent MUST run this sequence at the start of each session:
 
 ## Task Management
 
-1. **Plan First**: Check `coordination/TASK_BOARD.md` for the next task; claim it before starting
-2. **Track Progress**: Update task status in `TASK_BOARD.md` as you go
-3. **Log Decisions**: Record design choices in `coordination/DECISIONS.md`
-4. **Handoff**: Write handoff notes in your `coordination/AGENT_*.md` workspace
-5. **Capture Lessons**: After any correction, add to `coordination/LESSONS.md`
+1. **Between tasks**: Clear your Active Work/Validation section in your `AGENT_*.md` before writing the new task. If your previous task was `rejected`, re-claim it as `in_progress` before resuming work.
+2. **Plan First**: Check `coordination/TASK_BOARD.md` for the next task; claim it before starting
+3. **Track Progress**: Update task status in `TASK_BOARD.md` as you go
+4. **Log Decisions**: Record design choices in `coordination/DECISIONS.md`
+5. **Handoff**: Write handoff notes in your `coordination/AGENT_*.md` workspace
+6. **Capture Lessons**: After any correction, add to `coordination/LESSONS.md`
 
 ## Task Lifecycle
 
