@@ -35,7 +35,7 @@
 
 ## Completion Log
 
-Record completed tasks here. Git history tracks the code; this log tracks the context.
+Filled by QA at sign-off (task moves to `done`). Git history tracks the code; this log tracks the context.
 
 ### Template
 ```

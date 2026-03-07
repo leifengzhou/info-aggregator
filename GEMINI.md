@@ -27,3 +27,4 @@
 ## Git
 - Commit only test plans and QA workspace updates — never source code
 - Use `P1-XXX: description` format for task-related commits
+- Fill in TASK_BOARD.md completion log entry when signing off a task as `done`

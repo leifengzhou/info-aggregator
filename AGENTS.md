@@ -26,8 +26,7 @@
 - Prefer deterministic behavior and explicit error handling
 
 ## Git
-- Commit at task handoff using `P1-XXX: description` format
-- Fill in TASK_BOARD.md completion log entry before committing
+- Commit at task handoff (`in_review`) using `P1-XXX: description` format
 
 ## Handoff Format (Required)
 - Task ID
