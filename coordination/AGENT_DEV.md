@@ -6,7 +6,7 @@
 - Hand off to QA with clear context on what changed and how to validate.
 
 ## Active Work
-- Current Task ID: P1-005
+- Current Task ID: P1-006
 - Status: in_review
 - Started: 2026-03-07
 
@@ -14,12 +14,12 @@
 - None yet.
 
 ## Handoff to QA
-- Task ID: P1-005
-- Behavior changed: Migrated the reusable transcript logic into `src/transcript` with an importable `fetch_transcript()` API, explicit transcript error types, safe YouTube video ID parsing, and pure formatters for text, JSON, SRT, and VTT output.
-- Files touched: src/transcript/__init__.py, src/transcript/extractor.py, src/transcript/formatters.py, tests/test_transcript.py, requirements.txt, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md
-- Tests run: `python3 -m unittest tests.test_transcript tests.test_config tests.test_db`; `python3 -m compileall src tests`; import/smoke check for `fetch_transcript`, `extract_video_id`, and `transcript_to_srt`
-- Known risks: The migrated library still depends on `youtube-transcript-api` availability at runtime and live transcript fetching remains network-dependent. The old CLI-only helpers like playlist expansion and title lookup were intentionally not migrated because `P1-005` only requires the importable transcript library.
-- Suggested validation: Import `fetch_transcript` from `src.transcript`, verify formatter output for a known transcript fixture, and confirm non-YouTube URLs are rejected while standard YouTube watch/short URLs parse correctly.
+- Task ID: P1-006
+- Behavior changed: Implemented the YouTube adapter with RSS discovery, transcript fetching, fallback for missing transcripts, JSON artifact persistence under `data/content/youtube`, DB insertion, and topic linking with dedup support across reruns and across topics.
+- Files touched: src/adapters/youtube.py, tests/test_youtube_adapter.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md
+- Tests run: `python3 -m unittest tests.test_youtube_adapter`; `python3 -m unittest tests.test_youtube_adapter tests.test_transcript tests.test_config tests.test_db`; `python3 -m compileall src tests`
+- Known risks: RSS/network fetching is only unit-tested with mocked feed data in this slice; no live YouTube feed smoke was run. Artifact files are JSON payloads containing metadata plus transcript text rather than plain transcript-only text files.
+- Suggested validation: Run a real fetch against a known channel ID in a temp DB/content directory, then verify videos are discovered from RSS, transcript-less videos still produce DB rows and JSON artifacts, and rerunning only adds `content_topics` links instead of duplicate `content` rows.
 - Date: 2026-03-07
 
 ## Handoff History
@@ -29,3 +29,4 @@
 | P1-001 | 2026-03-07 | .gitignore, README.md, requirements.txt, config/topics.yaml, src/, tests/, data/ placeholders, coordination files | `python3 -m compileall src tests`; `python3 src/main.py`; topic count check on config | Implementation modules are placeholders; downstream architect handoffs still pending |
 | P1-002 | 2026-03-07 | src/config.py, tests/test_config.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md, coordination/LESSONS.md | `python3 -m unittest tests.test_config`; example config load smoke; `python3 -m compileall src tests` | Cron validation is structural, not semantic; only Phase 1 source types are accepted |
 | P1-005 | 2026-03-07 | src/transcript/, tests/test_transcript.py, requirements.txt, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_transcript tests.test_config tests.test_db`; `python3 -m compileall src tests`; transcript import smoke | Live fetching still depends on external network and transcript availability; playlist/title CLI helpers were not migrated in this slice |
+| P1-006 | 2026-03-07 | src/adapters/youtube.py, tests/test_youtube_adapter.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_youtube_adapter`; full unit suite; `python3 -m compileall src tests` | Live RSS/transcript fetching not smoke-tested; artifacts are JSON payloads, not transcript-only text files |
