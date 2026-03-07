@@ -6,15 +6,15 @@
 - Sign off on tasks or reject them back to dev with clear repro steps.
 
 ## Active Validation
-- Task ID: P1-001
-- Status: complete
-- Started: 2026-03-07
+- Task ID:
+- Status:
+- Started:
 
 ## Test Plan
-- Unit: N/A
-- Integration: N/A
-- CLI smoke: `python3 -m compileall src tests`, `python3 src/main.py`
-- Regression: Verified directory layout per TECH_SPEC.md and 3 config topics in topics.yaml.
+- Unit:
+- Integration:
+- CLI smoke:
+- Regression:
 
 ## Issue Log
 
@@ -43,13 +43,14 @@ Use this section for detailed repro steps when an issue needs more context.
 ```
 
 ## Sign-off
-- Task ID: P1-001
-- Result: pass
-- Residual risks: Modules are placeholders only. Architect handoffs pending.
-- Date: 2026-03-07
+- Task ID:
+- Result:
+- Residual risks:
+- Date:
 
 ## Sign-off History
 
 | Task ID | Date | Result | Residual Risks | Notes |
 |---------|------|--------|----------------|-------|
 | P1-001 | 2026-03-07 | pass | Modules are placeholders | Dirs created, topics.yaml with 3 topics verified |
+| P1-002 | 2026-03-07 | pass | Cron validation is structural only | YAML configs validated properly and bad ones rejected |

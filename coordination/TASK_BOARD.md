@@ -12,7 +12,7 @@
 | ID | Title | Owner | Status | Depends On | Acceptance Criteria |
 |---|---|---|---|---|---|
 | P1-001 | Scaffold project structure + example config | senior-dev | done | - | Dirs created, example topics.yaml with 3 topics |
-| P1-002 | Config loader with validation | senior-dev | in_review | P1-001 | Loads YAML, rejects invalid config with clear error |
+| P1-002 | Config loader with validation | senior-dev | done | P1-001 | Loads YAML, rejects invalid config with clear error |
 | P1-003 | SQLite schema + db operations | architect | todo | P1-001 | Tables created per TECH_SPEC; insert, dedup, query work |
 | P1-004 | Adapter base interface contract | architect | todo | P1-001 | FetchedItem dataclass + BaseAdapter ABC in src/adapters/ |
 | P1-005 | Migrate transcript library | senior-dev | todo | P1-004 | Importable fetch_transcript(); formatter tests pass |
@@ -55,3 +55,11 @@ Filled by QA at sign-off (task moves to `done`). Git history tracks the code; th
 - Files touched: .gitignore, README.md, requirements.txt, config/topics.yaml, src/, tests/, data/, coordination/
 - Tests run: `python3 -m compileall src tests`, `python3 src/main.py`
 - Notes: Acceptance criteria met. Directory scaffold is correct based on TECH_SPEC.md. Config has 3 topics.
+
+### P1-002: Config loader with validation
+- Completed: 2026-03-07
+- Owner: senior-dev
+- Commit: 0a8f902
+- Files touched: src/config.py, tests/test_config.py, coordination/
+- Tests run: `python3 -m unittest tests.test_config`, QA smoke tests
+- Notes: Acceptance criteria met. YAML is parsed correctly, invalid configs are rejected with clear ConfigError messages.
