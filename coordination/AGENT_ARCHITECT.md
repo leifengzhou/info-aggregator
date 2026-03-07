@@ -36,4 +36,6 @@ Track ratified interfaces here so dev and QA have a stable reference.
 
 ## Handoff History
 
-Tracked by git history. Use `git log --oneline` to review past handoffs.
+| Task ID | Date | Approved Interfaces | Constraints | Risks |
+|---------|------|---------------------|-------------|-------|
+| *(none yet)* | | | | |

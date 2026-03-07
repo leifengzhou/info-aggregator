@@ -25,6 +25,10 @@
 - Keep adapters contract-compliant
 - Prefer deterministic behavior and explicit error handling
 
+## Git
+- Commit at task handoff using `P1-XXX: description` format
+- Fill in TASK_BOARD.md completion log entry before committing
+
 ## Handoff Format (Required)
 - Task ID
 - Summary of behavior change

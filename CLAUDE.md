@@ -13,6 +13,10 @@
 - Review schema changes and module boundary shifts
 - Make final calls on technical disagreements (logged in `coordination/DECISIONS.md`)
 
+## Git
+- Commit design docs, interface contracts, and coordination file updates
+- Use `P1-XXX: description` or `docs:` prefix per RULES.md
+
 ## Architect Responsibilities
 - Approve or reject schema changes before they're implemented
 - Define adapter interface contracts in `src/adapters/__init__.py`

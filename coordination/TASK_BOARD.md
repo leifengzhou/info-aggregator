@@ -35,4 +35,15 @@
 
 ## Completion Log
 
-Completed tasks are recorded by git history. Use `git log --oneline --grep="P1-"` to review.
+Record completed tasks here. Git history tracks the code; this log tracks the context.
+
+### Template
+```
+### P1-XXX: Title
+- Completed: <date>
+- Owner: <role>
+- Commit: <short hash>
+- Files touched: ...
+- Tests run: ...
+- Notes: ...
+```

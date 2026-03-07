@@ -28,14 +28,24 @@ The `coordination/` folder is the shared workspace for multi-agent collaboration
 | `DECISIONS.md` | Architecture Decision Records (ADR-lite) — log all design decisions |
 | `LESSONS.md` | Shared lessons learned — mistakes and patterns to avoid repeating |
 | `AGENT_ARCHITECT.md` | Architect's workspace — approved contracts, handoffs to dev |
-| `AGENT_DEV.md` | Dev's workspace — implementation log, handoffs to QA |
+| `AGENT_DEV.md` | Dev's workspace — blockers, handoffs to QA |
 | `AGENT_QA.md` | QA's workspace — issue log, sign-offs, test plans |
 
 **Rules for coordination files:**
 - Update `TASK_BOARD.md` status and owner BEFORE starting work
+- Only modify your own task rows in `TASK_BOARD.md` — do not bulk-rewrite the file
 - One owner per task at a time
 - Schema or interface disagreements go to `DECISIONS.md` before code changes
-- Handoff notes are mandatory when passing work between roles
+- Handoff notes are mandatory when passing work between roles — write structured fields (risks, files, tests) in your `AGENT_*.md`, not just commit messages
+
+## Session Start Checklist
+
+Every agent MUST run this sequence at the start of each session:
+
+1. Read `RULES.md` (this file)
+2. Read `coordination/TASK_BOARD.md` — check for tasks in your queue
+3. Read `coordination/LESSONS.md` — avoid repeating past mistakes
+4. Read your workspace (`coordination/AGENT_*.md`) — check for pending handoffs or blockers
 
 ## Workflow Orchestration
 
@@ -103,7 +113,9 @@ QA validates against acceptance criteria -> signs off or rejects back to dev
 - `main` only — no feature branches until CI or multi-dev parallelism requires them
 
 ### Who Can Commit
-- Any agent can commit work they own (per `TASK_BOARD.md` ownership)
+- **Architect**: commits design docs, interface contracts, coordination file updates
+- **Dev**: commits source code, tests, config files at task handoff
+- **QA**: commits test plans and QA workspace updates only — no source code changes
 - Do not commit someone else's in-progress work
 
 ### When to Commit

@@ -50,4 +50,6 @@ Use this section for detailed repro steps when an issue needs more context.
 
 ## Sign-off History
 
-Tracked by git history. Use `git log --oneline` to review past sign-offs.
+| Task ID | Date | Result | Residual Risks | Notes |
+|---------|------|--------|----------------|-------|
+| *(none yet)* | | | | |

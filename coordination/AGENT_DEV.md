@@ -24,4 +24,6 @@
 
 ## Handoff History
 
-Tracked by git history. Use `git log --oneline` to review past handoffs.
+| Task ID | Date | Files Touched | Tests Run | Known Risks |
+|---------|------|---------------|-----------|-------------|
+| *(none yet)* | | | | |

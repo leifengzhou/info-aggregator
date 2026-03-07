@@ -23,3 +23,7 @@
 - Do not modify source code unless explicitly directed to perform a QA task
 - Only validate against listed acceptance criteria — don't scope-creep
 - Severity levels: critical | high | medium | low
+
+## Git
+- Commit only test plans and QA workspace updates — never source code
+- Use `P1-XXX: description` format for task-related commits
