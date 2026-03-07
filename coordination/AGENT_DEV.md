@@ -6,7 +6,7 @@
 - Hand off to QA with clear context on what changed and how to validate.
 
 ## Active Work
-- Current Task ID: P1-001
+- Current Task ID: P1-002
 - Status: in_review
 - Started: 2026-03-07
 
@@ -14,12 +14,12 @@
 - None yet.
 
 ## Handoff to QA
-- Task ID: P1-001
-- Behavior changed: Added the initial repository scaffold from the tech spec, including package directories, placeholder Python modules, tracked runtime directory placeholders, and an example `config/topics.yaml` with 3 topics.
-- Files touched: .gitignore, README.md, requirements.txt, config/topics.yaml, src/, tests/, data/ placeholder files, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md
-- Tests run: `python3 -m compileall src tests`; `python3 src/main.py`; `awk '/^  [a-z0-9-]+:$/ {count++} END {print count}' config/topics.yaml`
-- Known risks: Modules are placeholders only; architect-owned contracts for DB and adapter interfaces are still pending, so no behavior beyond scaffolding is implemented yet.
-- Suggested validation: Confirm the directory layout matches `TECH_SPEC.md` and that `config/topics.yaml` contains the expected 3 example topics with source entries.
+- Task ID: P1-002
+- Behavior changed: Implemented YAML config loading and validation in `src/config.py` with typed topic objects and path-specific errors for missing fields, invalid digest values, unsupported source types, invalid schedules, and malformed source entries.
+- Files touched: src/config.py, tests/test_config.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md, coordination/LESSONS.md
+- Tests run: `python3 -m unittest tests.test_config`; `python3 - <<'PY' ... load_config('config/topics.yaml') ... PY`; `python3 -m compileall src tests`
+- Known risks: Schedule validation only checks aliases (`hourly`, `daily`, `weekly`) or the presence of 5 cron fields; it does not validate cron field semantics. Source validation currently covers Phase 1 source types only (`youtube`, `reddit`, `rss`).
+- Suggested validation: Load `config/topics.yaml` through the config module, then try invalid configs with a missing field, bad digest, bad schedule, and malformed reddit/youtube entries to confirm the error paths are explicit.
 - Date: 2026-03-07
 
 ## Handoff History
@@ -27,3 +27,4 @@
 | Task ID | Date | Files Touched | Tests Run | Known Risks |
 |---------|------|---------------|-----------|-------------|
 | P1-001 | 2026-03-07 | .gitignore, README.md, requirements.txt, config/topics.yaml, src/, tests/, data/ placeholders, coordination files | `python3 -m compileall src tests`; `python3 src/main.py`; topic count check on config | Implementation modules are placeholders; downstream architect handoffs still pending |
+| P1-002 | 2026-03-07 | src/config.py, tests/test_config.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md, coordination/LESSONS.md | `python3 -m unittest tests.test_config`; example config load smoke; `python3 -m compileall src tests` | Cron validation is structural, not semantic; only Phase 1 source types are accepted |
