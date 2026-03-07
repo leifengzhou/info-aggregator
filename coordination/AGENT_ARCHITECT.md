@@ -6,9 +6,9 @@
 - Review schema changes and module boundary shifts.
 
 ## Active Work
-- Current Task ID: P1-003, P1-004
-- Status: in_progress
-- Started: 2026-03-07
+- Current Task ID: (none)
+- Status: idle
+- Started:
 
 ## Decisions Pending
 - None yet.
@@ -29,14 +29,14 @@ Track ratified interfaces here so dev and QA have a stable reference.
 - Failure modes and retry strategy
 
 ## Handoff to Dev
-- Task ID:
-- Approved interfaces:
-- Constraints:
-- Risks:
-- Date:
+- Task ID: P1-005, P1-006
+- Approved interfaces: `FetchedItem`, `BaseAdapter` (src/adapters/__init__.py), all db.py functions
+- Constraints: Adapters must return `FetchedItem`; use `insert_content` + `link_content_topic` for storage; call `content_exists` before expensive fetches (dedup)
+- Risks: No async support yet — fine for Phase 1 sequential fetching
+- Date: 2026-03-07
 
 ## Handoff History
 
 | Task ID | Date | Approved Interfaces | Constraints | Risks |
 |---------|------|---------------------|-------------|-------|
-| *(none yet)* | | | | |
+| P1-005, P1-006 | 2026-03-07 | FetchedItem, BaseAdapter, db.py API | Adapters return FetchedItem; dedup via content_exists | No async yet |
