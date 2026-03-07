@@ -15,7 +15,7 @@
 | P1-002 | Config loader with validation | senior-dev | done | P1-001 | Loads YAML, rejects invalid config with clear error |
 | P1-003 | SQLite schema + db operations | architect | done | P1-001 | Tables created per TECH_SPEC; insert, dedup, query work |
 | P1-004 | Adapter base interface contract | architect | done | P1-001 | FetchedItem dataclass + BaseAdapter ABC in src/adapters/ |
-| P1-005 | Migrate transcript library | senior-dev | in_review | P1-004 | Importable fetch_transcript(); formatter tests pass |
+| P1-005 | Migrate transcript library | senior-dev | done | P1-004 | Importable fetch_transcript(); formatter tests pass |
 | P1-006 | YouTube adapter | senior-dev | todo | P1-003, P1-004, P1-005 | Discovers videos via RSS, fetches transcripts, stores to DB+filesystem, dedup works |
 | P1-007 | CLI fetch command (--topic, --since) | senior-dev | todo | P1-002, P1-003, P1-006 | `fetch` runs all topics; `--topic` filters; `--since` sets start date |
 | P1-008 | Logging setup | senior-dev | todo | P1-001 | Structured logging (file + console); configurable log level; all adapters and DB ops log key events |
@@ -71,6 +71,14 @@ Filled by QA at sign-off (task moves to `done`). Git history tracks the code; th
 - Files touched: src/adapters/__init__.py
 - Tests run: `python3 -c "from src.adapters import FetchedItem, BaseAdapter"` (import verification)
 - Notes: FetchedItem dataclass + BaseAdapter ABC transcribed directly from TECH_SPEC.md lines 221-245. DEC-003 logged.
+
+### P1-005: Migrate transcript library
+- Completed: 2026-03-07
+- Owner: senior-dev
+- Commit: 15f1b8b
+- Files touched: src/transcript/__init__.py, src/transcript/extractor.py, src/transcript/formatters.py, tests/test_transcript.py, requirements.txt, coordination/
+- Tests run: unit tests, `fetch_transcript` smoke test against actual video, validation of formatters using protocol-compliant objects.
+- Notes: Acceptance criteria met. Reusable importable library extracted successfully, error handling is explicit.
 
 ### P1-003: SQLite schema + db operations
 - Completed: 2026-03-07
