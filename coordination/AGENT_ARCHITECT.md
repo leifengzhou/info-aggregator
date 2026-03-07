@@ -6,9 +6,9 @@
 - Review schema changes and module boundary shifts.
 
 ## Active Work
-- Current Task ID:
-- Status:
-- Started:
+- Current Task ID: P1-003, P1-004
+- Status: in_progress
+- Started: 2026-03-07
 
 ## Decisions Pending
 - None yet.
@@ -19,7 +19,8 @@ Track ratified interfaces here so dev and QA have a stable reference.
 
 | Contract | Location | Decision | Notes |
 |----------|----------|----------|-------|
-| *(none yet)* | | | |
+| FetchedItem + BaseAdapter | `src/adapters/__init__.py` | DEC-003 | Exact TECH_SPEC transcription |
+| db.py functional API | `src/db.py` | DEC-002 | Plain sqlite3, no ORM |
 
 ## Review Checklist
 - Adapter interface compatibility

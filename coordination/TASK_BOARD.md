@@ -13,8 +13,8 @@
 |---|---|---|---|---|---|
 | P1-001 | Scaffold project structure + example config | senior-dev | done | - | Dirs created, example topics.yaml with 3 topics |
 | P1-002 | Config loader with validation | senior-dev | done | P1-001 | Loads YAML, rejects invalid config with clear error |
-| P1-003 | SQLite schema + db operations | architect | todo | P1-001 | Tables created per TECH_SPEC; insert, dedup, query work |
-| P1-004 | Adapter base interface contract | architect | todo | P1-001 | FetchedItem dataclass + BaseAdapter ABC in src/adapters/ |
+| P1-003 | SQLite schema + db operations | architect | in_progress | P1-001 | Tables created per TECH_SPEC; insert, dedup, query work |
+| P1-004 | Adapter base interface contract | architect | in_progress | P1-001 | FetchedItem dataclass + BaseAdapter ABC in src/adapters/ |
 | P1-005 | Migrate transcript library | senior-dev | todo | P1-004 | Importable fetch_transcript(); formatter tests pass |
 | P1-006 | YouTube adapter | senior-dev | todo | P1-003, P1-004, P1-005 | Discovers videos via RSS, fetches transcripts, stores to DB+filesystem, dedup works |
 | P1-007 | CLI fetch command (--topic, --since) | senior-dev | todo | P1-002, P1-003, P1-006 | `fetch` runs all topics; `--topic` filters; `--since` sets start date |
