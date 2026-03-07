@@ -25,3 +25,9 @@ Shared lessons across all agents. After ANY correction from the user or a mistak
 - Agent: dev
 - Context: After finishing `P1-001`, I moved directly toward the next task without first re-reading the required coordination files for the new session boundary.
 - Lesson: When a user explicitly marks a task done or asks for the next task, treat that as a fresh session boundary: re-run the RULES/TASK_BOARD/LESSONS/workspace checklist before claiming new work.
+
+### L-003: Clean up temporary files regardless of short-circuit operators
+- Date: 2026-03-07
+- Agent: qa
+- Context: Ran `python3 qa_smoke.py && rm qa_smoke.py` to test a script and clean it up. The script failed, the `&&` short-circuited, and the `rm` command never ran, leaving a stray file that blocked the dev agent's next git operations.
+- Lesson: When writing temporary scratchpad files, clean them up explicitly via independent commands (e.g. `rm -f file.py`), rather than relying on conditional `&&` operators that might fail and strand files in the shared workspace.
