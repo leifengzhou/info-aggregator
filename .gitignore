@@ -4,9 +4,27 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
+.pytest_cache/
 
 # Data (generated at runtime)
-data/
+data/*
+!data/.gitkeep
+!data/content/
+!data/content/.gitkeep
+!data/content/youtube/
+!data/content/youtube/.gitkeep
+!data/content/reddit/
+!data/content/reddit/.gitkeep
+!data/content/rss/
+!data/content/rss/.gitkeep
+!data/content/hackernews/
+!data/content/hackernews/.gitkeep
+!data/digests/
+!data/digests/.gitkeep
+!data/digests/ai-research/
+!data/digests/ai-research/.gitkeep
+!data/digests/market-trends/
+!data/digests/market-trends/.gitkeep
 
 # IDE
 .vscode/
@@ -21,4 +39,3 @@ data/
 
 # Claude Code local state
 .claude/
-

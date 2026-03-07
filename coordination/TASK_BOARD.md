@@ -11,7 +11,7 @@
 ## Task Table
 | ID | Title | Owner | Status | Depends On | Acceptance Criteria |
 |---|---|---|---|---|---|
-| P1-001 | Scaffold project structure + example config | senior-dev | todo | - | Dirs created, example topics.yaml with 3 topics |
+| P1-001 | Scaffold project structure + example config | senior-dev | in_review | - | Dirs created, example topics.yaml with 3 topics |
 | P1-002 | Config loader with validation | senior-dev | todo | P1-001 | Loads YAML, rejects invalid config with clear error |
 | P1-003 | SQLite schema + db operations | architect | todo | P1-001 | Tables created per TECH_SPEC; insert, dedup, query work |
 | P1-004 | Adapter base interface contract | architect | todo | P1-001 | FetchedItem dataclass + BaseAdapter ABC in src/adapters/ |

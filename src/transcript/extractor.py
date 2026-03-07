@@ -1,0 +1,1 @@
+"""Core transcript extraction logic."""

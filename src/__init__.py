@@ -1,0 +1,1 @@
+"""Info Aggregator application package."""
