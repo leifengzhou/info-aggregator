@@ -10,23 +10,24 @@
 - Status: idle
 - Started:
 
-## Handoff to Dev — fetch_since Per-Topic Config Field
+## Handoff to Dev — Channel Handle Auto-Resolution (P1-011)
 - Date: 2026-03-08
-- Tasks: P1-010
+- Tasks: P1-010, P1-011
 - Priority order:
-  1. **P1-010** — config.py + main.py + tests (medium effort)
-  2. **P2-FUTURE-003** — log retention docs (architect-owned, defer)
-- Constraints:
-  - Precedence: CLI `--since` > topic's `fetch_since` > None (fetch all)
-  - Do NOT import `parse_since` from main.py into config.py — avoid circular imports; add `_parse_fetch_since()` private helper in config.py
-  - No DB schema changes
-  - No signature change to `run_fetch()` — `since: datetime | None` remains the CLI override
-- Spec:
-  - `TopicConfig` gains `fetch_since: datetime | None = None`
-  - `_parse_fetch_since(value, path)` in config.py handles ISO 8601 date and datetime strings
-  - In `run_fetch()`, compute `effective_since = since if since is not None else topic_config.fetch_since` per topic
-  - Tests: `TestFetchSince` in test_config.py (5 cases) + 3 since-precedence tests in test_main.py
-- DEC-006 logged; see DECISIONS.md
+  1. **P1-011** — config.py + youtube.py + tests (medium effort)
+  2. **P1-010** — config.py + main.py + tests (medium effort)
+  3. **P2-FUTURE-003** — log retention docs (architect-owned, defer)
+- Constraints (P1-011):
+  - No config write-back; resolution is per-run only
+  - `channel_id` takes priority over `channel_handle` if both present (existing behaviour preserved)
+  - `_build_feed_url` stays pure — no changes needed there
+  - Resolution failure → WARNING + return [] (source skipped, run continues)
+  - Injectable `channel_id_resolver` for testability
+- Spec (P1-011):
+  - `src/config.py`: extend `_validate_source_entry` to accept `channel_handle` as a third valid locator
+  - `src/adapters/youtube.py`: add `resolve_channel_handle(handle)` + inject into `__init__` + pre-step in `fetch()`
+  - Tests: 4 new cases in test_youtube_adapter.py + 2 new cases in test_config.py
+- DEC-007 logged; see DECISIONS.md
 
 ## Decisions Pending
 - None yet.

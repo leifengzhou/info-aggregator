@@ -46,6 +46,7 @@
 | P2-FUTURE-003 | Document log retention strategy | architect | todo | - | Add retention note and example rotation guidance to project docs |
 | P2-FUTURE-004 | Analysis pipeline: filter transcript_available=False | senior-dev | todo | - | Analysis pipeline skips items where artifact metadata.transcript_available is false |
 | P1-010 | fetch_since per-topic config field | senior-dev | todo | - | topic.fetch_since parsed from YAML and used as default since; CLI --since overrides for that run |
+| P1-011 | Channel handle auto-resolution | senior-dev | todo | - | channel_handle accepted in config YAML; resolved to channel_id via yt-dlp at fetch time; if resolution fails, source is skipped with WARNING |
 
 ## User Story -> Task Mapping
 - **US-001** (config): P1-001, P1-002

@@ -70,3 +70,13 @@ Use one entry per decision.
 - Decision: Persistent settings belong in config/topics.yaml under `settings:` or as per-topic fields. CLI flags are reserved for: bootstrap paths (--config), ad-hoc one-off overrides (--since, --topic), and automation/testing hooks (--db, --log-file). New settings default to config; a CLI flag is added only when an override use case exists.
 - Consequences: Config becomes the authoritative source of run behavior; CLI stays minimal.
 - Owner: architect
+
+---
+
+### DEC-007: Channel handle resolution via yt-dlp (per-run, no write-back)
+- Date: 2026-03-08
+- Status: accepted
+- Context: Users know channel handles, not IDs. yt-dlp is already a dependency.
+- Decision: Accept channel_handle as a config locator. At fetch time, if channel_id is absent, call yt-dlp to resolve the handle. No config mutation. Resolution is per-run (cheap — one subprocess call per handle, not per video).
+- Consequences: Slight per-run overhead for unresolved handles (~1-2s). No new dependencies. If resolution fails, source is skipped with a WARNING.
+- Owner: architect

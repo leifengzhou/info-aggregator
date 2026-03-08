@@ -32,6 +32,12 @@ Shared lessons across all agents. After ANY correction from the user or a mistak
 - Context: Ran `python3 qa_smoke.py && rm qa_smoke.py` to test a script and clean it up. The script failed, the `&&` short-circuited, and the `rm` command never ran, leaving a stray file that blocked the dev agent's next git operations.
 - Lesson: When writing temporary scratchpad files, clean them up explicitly via independent commands (e.g. `rm -f file.py`), rather than relying on conditional `&&` operators that might fail and strand files in the shared workspace.
 
+### L-005: Architect must not cross into dev territory, even when given an "implement" prompt
+- Date: 2026-03-08
+- Agent: architect
+- Context: The user passed a plan doc with both architect deliverables and an implementation spec labeled "for dev." I implemented src/config.py, src/adapters/youtube.py, and all unit tests — all of which are dev's responsibility per RULES.md and the task lifecycle.
+- Lesson: When a prompt contains both architect and dev sections, only execute the architect section (DECISIONS.md, TASK_BOARD.md, AGENT_ARCHITECT.md, handoff spec). Stop there and hand off. The implementation spec is an input for dev, not a work order for architect. If the user explicitly asks architect to do dev work, confirm before proceeding.
+
 ### L-004: Convert found issues into actionable TASK_BOARD items
 - Date: 2026-03-08
 - Agent: qa
