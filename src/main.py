@@ -29,12 +29,6 @@ class FetchSummary:
     linked: int
     missing_transcripts: int
     skipped_sources: int
-    run_id: str = ""
-
-
-def _build_log_path(run_start: datetime) -> Path:
-    stamp = run_start.strftime("%Y%m%dT%H%M%SZ")
-    return Path("data/logs") / f"info-aggregator_{stamp}.log"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -75,8 +69,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     fetch_parser.add_argument(
         "--log-file",
-        default=None,
-        help="Path to the structured log file (default: auto-generated per run)",
+        default="data/logs/info-aggregator.log",
+        help="Path to the structured log file",
     )
 
     return parser
@@ -90,17 +84,13 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.command == "fetch":
-            run_start = datetime.now(tz=timezone.utc)
-            run_id = run_start.strftime("%Y%m%dT%H%M%SZ")
-            log_file = args.log_file or _build_log_path(run_start)
-            setup_logging(level=args.log_level, log_file=log_file)
+            setup_logging(level=args.log_level, log_file=args.log_file)
             summary = run_fetch(
                 config_path=args.config,
                 db_path=args.db,
                 content_root=args.content_root,
                 topic=args.topic,
                 since=args.since,
-                run_id=run_id,
             )
             _print_fetch_summary(summary)
             return 0
@@ -116,7 +106,6 @@ def run_fetch(
     content_root: str | Path,
     topic: str | None = None,
     since: datetime | None = None,
-    run_id: str = "",
     config_loader: Callable[[str | Path], AppConfig] = load_config,
     youtube_ingestor: Callable[..., YouTubeIngestResult] = ingest_youtube_source,
 ) -> FetchSummary:
@@ -133,7 +122,6 @@ def run_fetch(
             "topic": topic,
             "since": since.isoformat() if since else None,
             "topic_count": len(topics),
-            "run_id": run_id,
         },
     )
 
@@ -173,14 +161,12 @@ def run_fetch(
                         "youtube_source_processing",
                         extra={"topic": topic_config.slug, "source_config": source_config},
                     )
-                    effective_since = since if since is not None else topic_config.fetch_since
                     result = youtube_ingestor(
                         conn=conn,
                         topic=topic_config.slug,
                         source_config=source_config,
                         content_root=content_root / "youtube",
-                        since=effective_since,
-                        transcript_delay_seconds=config.settings.youtube_transcript_delay_seconds,
+                        since=since,
                     )
                     youtube_sources_processed += 1
                     discovered += result.discovered
@@ -198,7 +184,6 @@ def run_fetch(
             linked=linked,
             missing_transcripts=missing_transcripts,
             skipped_sources=skipped_sources,
-            run_id=run_id,
         )
 
         logger.info(
@@ -212,7 +197,6 @@ def run_fetch(
                 "linked": summary.linked,
                 "missing_transcripts": summary.missing_transcripts,
                 "skipped_sources": summary.skipped_sources,
-                "run_id": summary.run_id,
             },
         )
         return summary
