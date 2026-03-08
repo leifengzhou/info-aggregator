@@ -6,7 +6,7 @@
 - Hand off to QA with clear context on what changed and how to validate.
 
 ## Active Work
-- Current Task ID: P1-REF-003
+- Current Task ID: P1-REF-004
 - Status: in_review
 - Started: 2026-03-08
 
@@ -14,12 +14,12 @@
 - None yet.
 
 ## Handoff to QA
-- Task ID: P1-REF-003
-- Behavior changed: Added `src/__main__.py` so the package can be executed directly with `python -m src`, delegating to the existing CLI implementation in `src.main`.
-- Files touched: src/__main__.py, tests/test_module_entrypoint.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md
-- Tests run: `python3 -m unittest tests.test_module_entrypoint`; `python3 -m src --help`; `python3 -m compileall src tests`
-- Known risks: The new coverage validates the package entry path and help output, but it does not execute a full live `fetch` run through `python -m src`.
-- Suggested validation: Run `python3 -m src --help` and `python3 -m src fetch --help`, then compare behavior with `python3 -m src.main`.
+- Task ID: P1-REF-004
+- Behavior changed: Added `requirements-dev.txt` to separate development-only dependencies from runtime requirements, with the dev file layering on top of `requirements.txt` and explicitly declaring `pytest`.
+- Files touched: requirements-dev.txt, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md
+- Tests run: `cat requirements-dev.txt`; `python3 -m unittest tests.test_db`; `python3 -m compileall src tests`
+- Known risks: `pytest` is declared but not installed in the current shell environment, so `python3 -m pytest --version` still fails until the dev requirements are installed.
+- Suggested validation: Run `uv pip install -r requirements-dev.txt` or `pip install -r requirements-dev.txt`, then confirm `python3 -m pytest --version` succeeds.
 - Date: 2026-03-08
 
 ## Handoff History
@@ -38,3 +38,4 @@
 | P1-REF-001 | 2026-03-08 | src/main.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_main`; `python3 -m compileall src tests` | Internal refactor only; adapter error-path aggregation remains covered indirectly rather than by dedicated new tests |
 | P1-REF-002 | 2026-03-08 | src/adapters/youtube.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_youtube_adapter tests.test_db`; `python3 -m compileall src tests` | DB insert is now the sole dedup gate; filesystem write failures after insert are not specially recovered |
 | P1-REF-003 | 2026-03-08 | src/__main__.py, tests/test_module_entrypoint.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_module_entrypoint`; `python3 -m src --help`; `python3 -m compileall src tests` | Help/entrypoint path is covered; full live fetch via `python -m src` is not separately exercised |
+| P1-REF-004 | 2026-03-08 | requirements-dev.txt, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `cat requirements-dev.txt`; `python3 -m unittest tests.test_db`; `python3 -m compileall src tests` | `pytest` is declared but not installed in the current environment until the dev requirements are installed |
