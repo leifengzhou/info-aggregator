@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Callable
+from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlencode, urlparse
 from urllib.request import urlopen
 from xml.etree import ElementTree
@@ -19,6 +21,7 @@ _ATOM_NAMESPACE = {
     "atom": "http://www.w3.org/2005/Atom",
     "yt": "http://www.youtube.com/xml/schemas/2015",
 }
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -47,8 +50,12 @@ class YouTubeAdapter(BaseAdapter):
         self, source_config: dict, since: datetime | None = None
     ) -> list[FetchedItem]:
         feed_url, locator_metadata = _build_feed_url(source_config)
-        feed_xml = self._feed_fetcher(feed_url)
-        discovered_videos = _parse_feed(feed_xml, since=since)
+        try:
+            feed_xml = self._feed_fetcher(feed_url)
+            discovered_videos = _parse_feed(feed_xml, since=since)
+        except (HTTPError, URLError, TimeoutError, ElementTree.ParseError) as exc:
+            logger.warning("youtube_feed_unavailable url=%s error=%s", feed_url, exc)
+            return []
 
         items: list[FetchedItem] = []
         for video in discovered_videos:

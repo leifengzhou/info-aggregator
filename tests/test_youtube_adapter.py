@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.error import HTTPError
 
 from src.adapters.youtube import YouTubeAdapter, ingest_youtube_source
 from src.db import get_content_by_topic, init_db
@@ -79,6 +80,24 @@ class TestYouTubeAdapterFetch(unittest.TestCase):
         self.assertEqual("", items[0].content)
         self.assertFalse(items[0].metadata["transcript_available"])
         self.assertEqual(0, items[0].metadata["transcript_segment_count"])
+
+    def test_fetch_logs_warning_and_returns_empty_on_http_error(self) -> None:
+        def failing_feed_fetcher(url: str) -> str:
+            raise HTTPError(url, 404, "Not Found", hdrs=None, fp=None)
+
+        adapter = YouTubeAdapter(
+            feed_fetcher=failing_feed_fetcher,
+            transcript_fetcher=lambda _video_id: [],
+        )
+
+        with self.assertLogs("src.adapters.youtube", level="WARNING") as logs:
+            items = adapter.fetch({"channel_id": "missing-channel"})
+
+        self.assertEqual([], items)
+        self.assertTrue(
+            any("youtube_feed_unavailable" in message for message in logs.output),
+            logs.output,
+        )
 
 
 class TestYouTubeIngestion(unittest.TestCase):
