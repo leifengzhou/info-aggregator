@@ -20,7 +20,7 @@
 | P1-007 | CLI fetch command (--topic, --since) | senior-dev | done | P1-002, P1-003, P1-006 | `fetch` runs all topics; `--topic` filters; `--since` sets start date |
 | BUG-001 | Resilient 404 handling in YouTube Adapter | senior-dev | done | P1-007 | Adapter catches 404/HTTP errors from feed fetching, logs a warning, and returns empty list instead of crashing. |
 | P1-008 | Logging setup | senior-dev | done | P1-001 | Structured logging (file + console); configurable log level; all adapters and DB ops log key events |
-| P1-009 | QA smoke plan for Phase 1 | senior-qa | todo | P1-007 | Smoke checks mapped to US-001 through US-004 acceptance criteria |
+| P1-009 | QA smoke plan for Phase 1 | senior-qa | done | P1-007 | Smoke checks mapped to US-001 through US-004 acceptance criteria |
 
 ## User Story -> Task Mapping
 - **US-001** (config): P1-001, P1-002
@@ -120,3 +120,11 @@ Filled by QA at sign-off (task moves to `done`). Git history tracks the code; th
 - Files touched: src/logging_setup.py, src/main.py, src/db.py, src/adapters/youtube.py, tests/
 - Tests run: unit tests, CLI smoke test generating file logs.
 - Notes: Acceptance criteria met. JSON line logs work correctly and record DB, ingest, and fetch boundaries.
+
+### P1-009: QA smoke plan for Phase 1
+- Completed: 2026-03-08
+- Owner: senior-qa
+- Commit: pending
+- Files touched: coordination/AGENT_QA.md, coordination/TASK_BOARD.md
+- Tests run: Execution of the mapped Phase 1 smoke test suite.
+- Notes: Phase 1 smoke plan created and executed successfully. US-001 through US-004 acceptance criteria have been systematically validated. Phase 1 is verified complete.

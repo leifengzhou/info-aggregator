@@ -11,10 +11,24 @@
 - Started:
 
 ## Test Plan
-- Unit:
-- Integration:
-- CLI smoke:
-- Regression:
+**Phase 1 Smoke Plan (US-001 through US-004)**
+
+**US-001: Configure topics and sources**
+- [x] Setup: verify `config/topics.yaml` has multiple topics and valid YAML structure.
+- [x] Action: Run `python3 -m src.main fetch` with bad config; expect clear rejection.
+- [x] Action: Run with valid config; expect system to load topics correctly.
+
+**US-002 & US-004: Fetch YouTube transcripts & Persistence**
+- [x] Action: Run `python3 -m src.main fetch --db test_p1.db --content-root test_p1_data`
+- [x] Check: Verify SQLite `test_p1.db` has entries in `content` and `content_topics` tables.
+- [x] Check: Verify raw JSON files are created in `test_p1_data/youtube/` containing metadata and transcripts.
+- [x] Check: Run fetch again and verify `Items inserted` is 0 (deduplication works).
+
+**US-003: Fetch by topic or date range**
+- [x] Action: Run `python3 -m src.main fetch --topic ai-research --db test_p1.db --content-root test_p1_data`
+- [x] Check: System only processes the single requested topic.
+- [x] Action: Run `python3 -m src.main fetch --since 2026-03-01T00:00:00 --db test_p1.db --content-root test_p1_data`
+- [x] Check: System passes the since date correctly to adapters (fewer/different items discovered depending on date).
 
 ## Issue Log
 
@@ -68,3 +82,4 @@ Use this section for detailed repro steps when an issue needs more context.
 | P1-007 | 2026-03-08 | pass-with-risk | Adapter crashes on 404s (ISSUE-001) | CLI itself meets acceptance criteria (routes arguments and outputs stats correctly). |
 | BUG-001 | 2026-03-08 | pass | Transcript fetch errors not handled here | Validated that 404s gracefully degrade to 0 items via CLI |
 | P1-008 | 2026-03-08 | pass | JSON lines directly to stderr can be noisy | Validated structured logging configuration and db/adapter records |
+| P1-009 | 2026-03-08 | pass | None | Formally verified all Phase 1 User Stories via smoke script |
