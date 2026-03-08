@@ -6,7 +6,7 @@
 - Hand off to QA with clear context on what changed and how to validate.
 
 ## Active Work
-- Current Task ID: P1-REF-002
+- Current Task ID: P1-REF-003
 - Status: in_review
 - Started: 2026-03-08
 
@@ -14,12 +14,12 @@
 - None yet.
 
 ## Handoff to QA
-- Task ID: P1-REF-002
-- Behavior changed: Removed the redundant `content_exists()` pre-check from YouTube ingestion. Dedup now relies on the existing `insert_content()` return value, which keeps the same external behavior with one fewer DB query per fetched item.
-- Files touched: src/adapters/youtube.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md
-- Tests run: `python3 -m unittest tests.test_youtube_adapter tests.test_db`; `python3 -m compileall src tests`
-- Known risks: Artifact files are now written only after a successful insert, so a filesystem write failure would leave a DB row pointing at an expected path without the file. Existing tests do not simulate that failure mode.
-- Suggested validation: Run `python3 -m unittest tests.test_youtube_adapter tests.test_db` and spot-check a duplicate fetch run to confirm inserts stay at 0 while topic links still dedupe cleanly.
+- Task ID: P1-REF-003
+- Behavior changed: Added `src/__main__.py` so the package can be executed directly with `python -m src`, delegating to the existing CLI implementation in `src.main`.
+- Files touched: src/__main__.py, tests/test_module_entrypoint.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md
+- Tests run: `python3 -m unittest tests.test_module_entrypoint`; `python3 -m src --help`; `python3 -m compileall src tests`
+- Known risks: The new coverage validates the package entry path and help output, but it does not execute a full live `fetch` run through `python -m src`.
+- Suggested validation: Run `python3 -m src --help` and `python3 -m src fetch --help`, then compare behavior with `python3 -m src.main`.
 - Date: 2026-03-08
 
 ## Handoff History
@@ -37,3 +37,4 @@
 | P1-CLEANUP-002 | 2026-03-08 | config/topics.yaml, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_config`; live RSS `curl` check for every configured `channel_id` in `config/topics.yaml` | `TECH_SPEC.md` still references the stale old channel example until architect syncs the document |
 | P1-REF-001 | 2026-03-08 | src/main.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_main`; `python3 -m compileall src tests` | Internal refactor only; adapter error-path aggregation remains covered indirectly rather than by dedicated new tests |
 | P1-REF-002 | 2026-03-08 | src/adapters/youtube.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_youtube_adapter tests.test_db`; `python3 -m compileall src tests` | DB insert is now the sole dedup gate; filesystem write failures after insert are not specially recovered |
+| P1-REF-003 | 2026-03-08 | src/__main__.py, tests/test_module_entrypoint.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_module_entrypoint`; `python3 -m src --help`; `python3 -m compileall src tests` | Help/entrypoint path is covered; full live fetch via `python -m src` is not separately exercised |
