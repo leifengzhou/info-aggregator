@@ -18,9 +18,16 @@
 | P1-005 | Migrate transcript library | senior-dev | done | P1-004 | Importable fetch_transcript(); formatter tests pass |
 | P1-006 | YouTube adapter | senior-dev | done | P1-003, P1-004, P1-005 | Discovers videos via RSS, fetches transcripts, stores to DB+filesystem, dedup works |
 | P1-007 | CLI fetch command (--topic, --since) | senior-dev | done | P1-002, P1-003, P1-006 | `fetch` runs all topics; `--topic` filters; `--since` sets start date |
-| BUG-001 | Resilient 404 handling in YouTube Adapter | senior-dev | done | P1-007 | Adapter catches 404/HTTP errors from feed fetching, logs a warning, and returns empty list instead of crashing. |
+| P1-BUG-001 | Resilient 404 handling in YouTube Adapter | senior-dev | done | P1-007 | Adapter catches 404/HTTP errors from feed fetching, logs a warning, and returns empty list instead of crashing. |
 | P1-008 | Logging setup | senior-dev | done | P1-001 | Structured logging (file + console); configurable log level; all adapters and DB ops log key events |
 | P1-009 | QA smoke plan for Phase 1 | senior-qa | done | P1-007 | Smoke checks mapped to US-001 through US-004 acceptance criteria |
+| P1-CLEANUP-001 | Remove stale files from workspace | senior-dev | in_review | - | `coordination/.venv/`, `test_p1.db*` removed; no untracked junk in repo |
+| P1-CLEANUP-002 | Fix broken channel ID in default config | senior-dev | todo | - | All channel_ids in `config/topics.yaml` return valid RSS feeds |
+| P1-REF-001 | Simplify FetchSummary accumulation in main.py | senior-dev | todo | - | FetchSummary no longer rebuilt from scratch each iteration; mutable counters or equivalent |
+| P1-REF-002 | Remove redundant content_exists check in YouTube adapter | senior-dev | todo | - | `ingest_youtube_source` uses `insert_content` return value for dedup instead of separate query; test_youtube_adapter still passes |
+| P1-REF-003 | Add `__main__.py` for `src` package | senior-dev | todo | - | `python -m src fetch` works as equivalent to `python -m src.main fetch` |
+| P1-REF-004 | Add requirements-dev.txt for test dependencies | senior-dev | todo | - | `pytest` and other dev-only deps listed separately from runtime deps |
+| P1-BUG-002 | Timezone inconsistency in --since filtering | senior-dev | todo | - | `published_at` values stored with consistent timezone handling; `--since` filter works correctly regardless of source timezone |
 
 ## User Story -> Task Mapping
 - **US-001** (config): P1-001, P1-002
@@ -105,7 +112,7 @@ Filled by QA at sign-off (task moves to `done`). Git history tracks the code; th
 - Tests run: unit tests, CLI smoke test against default config with no args, with `--topic` filter, and with `--since` filter.
 - Notes: Acceptance criteria met. CLI correctly routes the args, outputs processing summary, and ignores non-YouTube sources as intended for this phase. Logged an issue for the default config having a 404 channel ID.
 
-### BUG-001: Resilient 404 handling in YouTube Adapter
+### P1-BUG-001: Resilient 404 handling in YouTube Adapter
 - Completed: 2026-03-08
 - Owner: senior-dev
 - Commit: 6db14e5
