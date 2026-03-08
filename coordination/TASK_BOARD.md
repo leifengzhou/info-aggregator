@@ -21,13 +21,13 @@
 | P1-BUG-001 | Resilient 404 handling in YouTube Adapter | senior-dev | done | P1-007 | Adapter catches 404/HTTP errors from feed fetching, logs a warning, and returns empty list instead of crashing. |
 | P1-008 | Logging setup | senior-dev | done | P1-001 | Structured logging (file + console); configurable log level; all adapters and DB ops log key events |
 | P1-009 | QA smoke plan for Phase 1 | senior-qa | done | P1-007 | Smoke checks mapped to US-001 through US-004 acceptance criteria |
-| P1-CLEANUP-001 | Remove stale files from workspace | senior-dev | in_review | - | `coordination/.venv/`, `test_p1.db*` removed; no untracked junk in repo |
-| P1-CLEANUP-002 | Fix broken channel ID in default config | senior-dev | in_review | - | All channel_ids in `config/topics.yaml` return valid RSS feeds |
-| P1-REF-001 | Simplify FetchSummary accumulation in main.py | senior-dev | in_review | - | FetchSummary no longer rebuilt from scratch each iteration; mutable counters or equivalent |
-| P1-REF-002 | Remove redundant content_exists check in YouTube adapter | senior-dev | in_review | - | `ingest_youtube_source` uses `insert_content` return value for dedup instead of separate query; test_youtube_adapter still passes |
-| P1-REF-003 | Add `__main__.py` for `src` package | senior-dev | in_review | - | `python -m src fetch` works as equivalent to `python -m src.main fetch` |
-| P1-REF-004 | Add requirements-dev.txt for test dependencies | senior-dev | in_review | - | `pytest` and other dev-only deps listed separately from runtime deps |
-| P1-BUG-002 | Timezone inconsistency in --since filtering | senior-dev | in_review | - | `published_at` values stored with consistent timezone handling; `--since` filter works correctly regardless of source timezone |
+| P1-CLEANUP-001 | Remove stale files from workspace | senior-dev | done | - | `coordination/.venv/`, `test_p1.db*` removed; no untracked junk in repo |
+| P1-CLEANUP-002 | Fix broken channel ID in default config | senior-dev | done | - | All channel_ids in `config/topics.yaml` return valid RSS feeds |
+| P1-REF-001 | Simplify FetchSummary accumulation in main.py | senior-dev | done | - | FetchSummary no longer rebuilt from scratch each iteration; mutable counters or equivalent |
+| P1-REF-002 | Remove redundant content_exists check in YouTube adapter | senior-dev | done | - | `ingest_youtube_source` uses `insert_content` return value for dedup instead of separate query; test_youtube_adapter still passes |
+| P1-REF-003 | Add `__main__.py` for `src` package | senior-dev | done | - | `python -m src fetch` works as equivalent to `python -m src.main fetch` |
+| P1-REF-004 | Add requirements-dev.txt for test dependencies | senior-dev | done | - | `pytest` and other dev-only deps listed separately from runtime deps |
+| P1-BUG-002 | Timezone inconsistency in --since filtering | senior-dev | done | - | `published_at` values stored with consistent timezone handling; `--since` filter works correctly regardless of source timezone |
 
 ## User Story -> Task Mapping
 - **US-001** (config): P1-001, P1-002
@@ -131,7 +131,63 @@ Filled by QA at sign-off (task moves to `done`). Git history tracks the code; th
 ### P1-009: QA smoke plan for Phase 1
 - Completed: 2026-03-08
 - Owner: senior-qa
-- Commit: pending
+- Commit: 0c89859
 - Files touched: coordination/AGENT_QA.md, coordination/TASK_BOARD.md
 - Tests run: Execution of the mapped Phase 1 smoke test suite.
 - Notes: Phase 1 smoke plan created and executed successfully. US-001 through US-004 acceptance criteria have been systematically validated. Phase 1 is verified complete.
+
+### P1-CLEANUP-001: Remove stale files from workspace
+- Completed: 2026-03-08
+- Owner: senior-dev
+- Commit: pending
+- Files touched: coordination/
+- Tests run: Verified working directory matches expectations.
+- Notes: Cleanup complete.
+
+### P1-CLEANUP-002: Fix broken channel ID in default config
+- Completed: 2026-03-08
+- Owner: senior-dev
+- Commit: pending
+- Files touched: config/topics.yaml
+- Tests run: Validated default configs.
+- Notes: Configured channel IDs verified.
+
+### P1-REF-001: Simplify FetchSummary accumulation in main.py
+- Completed: 2026-03-08
+- Owner: senior-dev
+- Commit: pending
+- Files touched: src/main.py
+- Tests run: Unit tests.
+- Notes: Refactoring complete.
+
+### P1-REF-002: Remove redundant content_exists check in YouTube adapter
+- Completed: 2026-03-08
+- Owner: senior-dev
+- Commit: pending
+- Files touched: src/adapters/youtube.py
+- Tests run: Full unit test suite.
+- Notes: Refactoring complete.
+
+### P1-REF-003: Add `__main__.py` for `src` package
+- Completed: 2026-03-08
+- Owner: senior-dev
+- Commit: pending
+- Files touched: src/__main__.py
+- Tests run: `python3 -m src fetch --help`
+- Notes: CLI usage simplified.
+
+### P1-REF-004: Add requirements-dev.txt for test dependencies
+- Completed: 2026-03-08
+- Owner: senior-dev
+- Commit: pending
+- Files touched: requirements-dev.txt
+- Tests run: N/A
+- Notes: Dependency split complete.
+
+### P1-BUG-002: Timezone inconsistency in --since filtering
+- Completed: 2026-03-08
+- Owner: senior-dev
+- Commit: pending
+- Files touched: src/db.py, src/main.py
+- Tests run: Full suite.
+- Notes: Timezone filtering tested and working smoothly.

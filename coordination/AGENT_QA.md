@@ -83,3 +83,10 @@ Use this section for detailed repro steps when an issue needs more context.
 | P1-BUG-001 | 2026-03-08 | pass | Transcript fetch errors not handled here | Validated that 404s gracefully degrade to 0 items via CLI |
 | P1-008 | 2026-03-08 | pass | JSON lines directly to stderr can be noisy | Validated structured logging configuration and db/adapter records |
 | P1-009 | 2026-03-08 | pass | None | Formally verified all Phase 1 User Stories via smoke script |
+| P1-CLEANUP-001 | 2026-03-08 | pass | None | Verified stale files are gone |
+| P1-CLEANUP-002 | 2026-03-08 | pass | None | Validated fix of broken channel ID in config |
+| P1-REF-001 | 2026-03-08 | pass | None | Verified main refactoring via tests |
+| P1-REF-002 | 2026-03-08 | pass | None | Verified youtube adapter refactoring via tests |
+| P1-REF-003 | 2026-03-08 | pass | None | Verified `python3 -m src fetch --help` behaves equivalently to `src.main` |
+| P1-REF-004 | 2026-03-08 | pass | None | Verified explicit dev dependencies |
+| P1-BUG-002 | 2026-03-08 | pass | None | Verified timezone-aware logic via automated suite |
