@@ -16,7 +16,7 @@
 | P1-003 | SQLite schema + db operations | architect | done | P1-001 | Tables created per TECH_SPEC; insert, dedup, query work |
 | P1-004 | Adapter base interface contract | architect | done | P1-001 | FetchedItem dataclass + BaseAdapter ABC in src/adapters/ |
 | P1-005 | Migrate transcript library | senior-dev | done | P1-004 | Importable fetch_transcript(); formatter tests pass |
-| P1-006 | YouTube adapter | senior-dev | in_review | P1-003, P1-004, P1-005 | Discovers videos via RSS, fetches transcripts, stores to DB+filesystem, dedup works |
+| P1-006 | YouTube adapter | senior-dev | done | P1-003, P1-004, P1-005 | Discovers videos via RSS, fetches transcripts, stores to DB+filesystem, dedup works |
 | P1-007 | CLI fetch command (--topic, --since) | senior-dev | todo | P1-002, P1-003, P1-006 | `fetch` runs all topics; `--topic` filters; `--since` sets start date |
 | P1-008 | Logging setup | senior-dev | todo | P1-001 | Structured logging (file + console); configurable log level; all adapters and DB ops log key events |
 | P1-009 | QA smoke plan for Phase 1 | senior-qa | todo | P1-007 | Smoke checks mapped to US-001 through US-004 acceptance criteria |
@@ -87,3 +87,11 @@ Filled by QA at sign-off (task moves to `done`). Git history tracks the code; th
 - Files touched: src/db.py, tests/test_db.py
 - Tests run: `python3 -m pytest tests/test_db.py -v` (9 passed)
 - Notes: 3 tables, 3 indexes per TECH_SPEC schema. 6 functions (init_db, insert_content, link_content_topic, content_exists, get_content_by_topic, insert_digest). DEC-002 logged.
+
+### P1-006: YouTube adapter
+- Completed: 2026-03-07
+- Owner: senior-dev
+- Commit: 8130ec8
+- Files touched: src/adapters/youtube.py, tests/test_youtube_adapter.py, coordination/
+- Tests run: unit tests, manual live integration check with Google Developers channel to verify discovery, db insertion, and topic deduplication.
+- Notes: Acceptance criteria met. Live fetching successfully pulls and parses feeds, creates db entries, links topics, and skips duplicate inserts on re-runs.
