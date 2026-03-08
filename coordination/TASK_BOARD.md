@@ -19,7 +19,7 @@
 | P1-006 | YouTube adapter | senior-dev | done | P1-003, P1-004, P1-005 | Discovers videos via RSS, fetches transcripts, stores to DB+filesystem, dedup works |
 | P1-007 | CLI fetch command (--topic, --since) | senior-dev | done | P1-002, P1-003, P1-006 | `fetch` runs all topics; `--topic` filters; `--since` sets start date |
 | BUG-001 | Resilient 404 handling in YouTube Adapter | senior-dev | done | P1-007 | Adapter catches 404/HTTP errors from feed fetching, logs a warning, and returns empty list instead of crashing. |
-| P1-008 | Logging setup | senior-dev | in_review | P1-001 | Structured logging (file + console); configurable log level; all adapters and DB ops log key events |
+| P1-008 | Logging setup | senior-dev | done | P1-001 | Structured logging (file + console); configurable log level; all adapters and DB ops log key events |
 | P1-009 | QA smoke plan for Phase 1 | senior-qa | todo | P1-007 | Smoke checks mapped to US-001 through US-004 acceptance criteria |
 
 ## User Story -> Task Mapping
@@ -112,3 +112,11 @@ Filled by QA at sign-off (task moves to `done`). Git history tracks the code; th
 - Files touched: src/adapters/youtube.py, tests/test_youtube_adapter.py, coordination/
 - Tests run: unit tests, `python3 -m src.main fetch` via CLI against default config containing broken channel.
 - Notes: Acceptance criteria met. Fetching no longer crashes on HTTP/URL/Parse errors from YouTube RSS feeds; instead, logs a warning and gracefully continues with zero items.
+
+### P1-008: Logging setup
+- Completed: 2026-03-08
+- Owner: senior-dev
+- Commit: cd2339b
+- Files touched: src/logging_setup.py, src/main.py, src/db.py, src/adapters/youtube.py, tests/
+- Tests run: unit tests, CLI smoke test generating file logs.
+- Notes: Acceptance criteria met. JSON line logs work correctly and record DB, ingest, and fetch boundaries.

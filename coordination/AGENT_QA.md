@@ -67,3 +67,4 @@ Use this section for detailed repro steps when an issue needs more context.
 | P1-006 | 2026-03-07 | pass | Network dependent, artifacts are full JSON payloads | Validated live fetching, db insertion, and topic deduplication via script |
 | P1-007 | 2026-03-08 | pass-with-risk | Adapter crashes on 404s (ISSUE-001) | CLI itself meets acceptance criteria (routes arguments and outputs stats correctly). |
 | BUG-001 | 2026-03-08 | pass | Transcript fetch errors not handled here | Validated that 404s gracefully degrade to 0 items via CLI |
+| P1-008 | 2026-03-08 | pass | JSON lines directly to stderr can be noisy | Validated structured logging configuration and db/adapter records |
