@@ -130,6 +130,17 @@ QA validates against acceptance criteria -> signs off or rejects back to dev
 - **Commit doc/coordination changes** in a single batch when a planning session ends
 - Do not commit mid-task partial work; the repo should always be in a coherent state
 
+### Task ID Naming Convention
+```
+P<phase>-<number>          # Feature tasks:  P1-001, P2-003
+P<phase>-BUG-<number>      # Bug fixes:      P1-BUG-001, P2-BUG-002
+P<phase>-REF-<number>      # Refactors:      P1-REF-001
+P<phase>-CLEANUP-<number>  # Cleanup/chores: P1-CLEANUP-001
+```
+- All task IDs are scoped to their phase for clean archiving
+- The category (BUG, REF, CLEANUP) is part of the ID — no extra columns needed
+- Feature tasks use bare `P<phase>-<number>`
+
 ### Commit Message Format
 ```
 P1-XXX: short imperative description
@@ -144,6 +155,12 @@ Optional body with context if the "why" isn't obvious.
 - `.env`, secrets, API keys (enforced by `.gitignore`)
 - Generated data (`data/` directory)
 - IDE and editor config (`.vscode/`, `.idea/`)
+
+## Documentation
+
+- `README.md` is user-facing usage documentation, not a roadmap or status tracker
+- Update `README.md` when a task adds or changes: CLI commands/flags, setup steps, dependencies, project layout, or configuration format
+- Do not put phase status, task tracking, or internal coordination details in `README.md`
 
 ## Guardrails
 

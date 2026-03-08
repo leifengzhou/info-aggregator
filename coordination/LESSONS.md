@@ -36,4 +36,4 @@ Shared lessons across all agents. After ANY correction from the user or a mistak
 - Date: 2026-03-08
 - Agent: qa
 - Context: Logged an issue for a crash (ISSUE-001) in `AGENT_QA.md` and passed the related task, leaving the bug "open" but not assigned on the main board. The Dev agent only pulls work from the `TASK_BOARD.md` `todo` column, meaning the bug would never be picked up.
-- Lesson: Never log "dead-end" issues in local workspaces. If an issue is found but the current task is still marked as `done`, you MUST explicitly create a new `BUG-XXX` row in the `TASK_BOARD.md` and assign it to the Dev in the `todo` state so the pipeline actually addresses it.
+- Lesson: Never log "dead-end" issues in local workspaces. If an issue is found but the current task is still marked as `done`, you MUST explicitly create a new `P<phase>-BUG-XXX` row in the `TASK_BOARD.md` and assign it to the Dev in the `todo` state so the pipeline actually addresses it.

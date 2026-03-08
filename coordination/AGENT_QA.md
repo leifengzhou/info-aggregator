@@ -36,7 +36,7 @@ Track all findings here. Rejected tasks should reference an issue ID.
 
 | Issue | Task | Severity | Status | Description |
 |-------|------|----------|--------|-------------|
-| ISSUE-001 | P1-007 | low | fixed | `config/topics.yaml` has a YouTube channel (`UCsJAl5x2J97OVJ4AO8QyPMA`) that 404s, causing `fetch` to crash if unhandled. Adapter needs resilient 404 handling. |
+| ISSUE-001 | P1-007, P1-BUG-001 | low | fixed | `config/topics.yaml` has a YouTube channel (`UCsJAl5x2J97OVJ4AO8QyPMA`) that 404s, causing `fetch` to crash if unhandled. Adapter needs resilient 404 handling. |
 
 **Severity**: critical | high | medium | low
 **Status**: open | fixed | wont-fix
@@ -63,7 +63,7 @@ Use this section for detailed repro steps when an issue needs more context.
 - Expected: Adapter skips the missing channel or logs a warning instead of crashing the whole topic fetch.
 - Actual: `urllib.error.HTTPError: HTTP Error 404: Not Found` is thrown unhandled in `_fetch_feed`, halting execution.
 - Affected files: `src/adapters/youtube.py`, `config/topics.yaml`
-- Resolution: Fixed in BUG-001 via try/except blocks around feed fetching in YouTube adapter.
+- Resolution: Fixed in P1-BUG-001 via try/except blocks around feed fetching in YouTube adapter.
 
 ## Sign-off
 - Task ID:
@@ -80,6 +80,6 @@ Use this section for detailed repro steps when an issue needs more context.
 | P1-005 | 2026-03-07 | pass | Network dependencies, `youtube-transcript-api` required at runtime | Tested extraction + formatting over real YouTube transcripts |
 | P1-006 | 2026-03-07 | pass | Network dependent, artifacts are full JSON payloads | Validated live fetching, db insertion, and topic deduplication via script |
 | P1-007 | 2026-03-08 | pass-with-risk | Adapter crashes on 404s (ISSUE-001) | CLI itself meets acceptance criteria (routes arguments and outputs stats correctly). |
-| BUG-001 | 2026-03-08 | pass | Transcript fetch errors not handled here | Validated that 404s gracefully degrade to 0 items via CLI |
+| P1-BUG-001 | 2026-03-08 | pass | Transcript fetch errors not handled here | Validated that 404s gracefully degrade to 0 items via CLI |
 | P1-008 | 2026-03-08 | pass | JSON lines directly to stderr can be noisy | Validated structured logging configuration and db/adapter records |
 | P1-009 | 2026-03-08 | pass | None | Formally verified all Phase 1 User Stories via smoke script |
