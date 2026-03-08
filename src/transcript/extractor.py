@@ -32,6 +32,16 @@ class TranscriptSegment:
     duration: float
 
 
+@dataclass(frozen=True)
+class TranscriptResult:
+    """Full transcript fetch result with metadata."""
+
+    segments: list[TranscriptSegment]
+    language: str
+    language_code: str
+    is_generated: bool
+
+
 def extract_video_id(value: str) -> str:
     """Extract a YouTube video ID from a URL or accept an 11-character ID directly."""
 
@@ -65,7 +75,7 @@ def fetch_transcript(
     lang: str = "en",
     proxy_url: str | None = None,
     preserve_formatting: bool = False,
-) -> list[TranscriptSegment]:
+) -> TranscriptResult:
     """Fetch transcript entries for a YouTube video ID or URL."""
 
     video_id = extract_video_id(video)
@@ -86,7 +96,12 @@ def fetch_transcript(
                 f"No subtitles available for video {video_id}"
             ) from fallback_exc
 
-    return _normalize_snippets(transcript.snippets)
+    return TranscriptResult(
+        segments=_normalize_snippets(transcript.snippets),
+        language=transcript.language,
+        language_code=transcript.language_code,
+        is_generated=transcript.is_generated,
+    )
 
 
 def _build_api(proxy_url: str | None):

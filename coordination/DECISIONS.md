@@ -40,3 +40,13 @@ Use one entry per decision.
 - Decision: Transcribe the spec verbatim — no extensions (e.g., async, batch callbacks, error types) until a concrete adapter demands them.
 - Consequences: Simple contract; easy for dev to implement first adapter (YouTube). Extensions deferred to when needed.
 - Owner: architect
+
+---
+
+### DEC-004: fetch_transcript() returns TranscriptResult instead of list[TranscriptSegment]
+- Date: 2026-03-08
+- Status: accepted
+- Context: No visibility into whether transcripts are manual or auto-generated. The upstream `youtube-transcript-api` provides `is_generated`, `language`, and `language_code` on the transcript object, but we were discarding this metadata.
+- Decision: Introduce a `TranscriptResult` dataclass wrapping segments + metadata. `fetch_transcript()` returns `TranscriptResult` instead of a bare list. YouTube adapter surfaces `transcript_is_generated` and `transcript_language` in item metadata.
+- Consequences: Breaking change to `fetch_transcript()` return type — all callers updated. Enables downstream consumers (digests, UI) to distinguish manual vs auto-generated transcripts.
+- Owner: architect

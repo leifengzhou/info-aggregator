@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from src.transcript import (
     TranscriptNotAvailableError,
+    TranscriptResult,
     TranscriptSegment,
     extract_video_id,
     fetch_transcript,
@@ -70,24 +71,31 @@ class FormatterTests(unittest.TestCase):
 
 class FetchTranscriptTests(unittest.TestCase):
     @patch("src.transcript.extractor._build_api")
-    def test_fetch_transcript_returns_normalized_segments(self, build_api_mock) -> None:
+    def test_fetch_transcript_returns_transcript_result(self, build_api_mock) -> None:
         fake_api = build_api_mock.return_value
         fake_api.fetch.return_value = SimpleNamespace(
             snippets=[
                 SimpleNamespace(text="Hello", start=0.0, duration=1.2),
                 SimpleNamespace(text="World", start=1.2, duration=0.8),
-            ]
+            ],
+            language="English",
+            language_code="en",
+            is_generated=False,
         )
 
-        entries = fetch_transcript("dQw4w9WgXcQ")
+        result = fetch_transcript("dQw4w9WgXcQ")
 
+        self.assertIsInstance(result, TranscriptResult)
         self.assertEqual(
             [
                 TranscriptSegment(text="Hello", start=0.0, duration=1.2),
                 TranscriptSegment(text="World", start=1.2, duration=0.8),
             ],
-            entries,
+            result.segments,
         )
+        self.assertEqual("English", result.language)
+        self.assertEqual("en", result.language_code)
+        self.assertFalse(result.is_generated)
         fake_api.fetch.assert_called_once_with(
             "dQw4w9WgXcQ", languages=["en"], preserve_formatting=False
         )
@@ -97,12 +105,19 @@ class FetchTranscriptTests(unittest.TestCase):
         fake_api = build_api_mock.return_value
         fake_api.fetch.side_effect = [
             RuntimeError("missing requested language"),
-            SimpleNamespace(snippets=[SimpleNamespace(text="Hola", start=0.0, duration=1.0)]),
+            SimpleNamespace(
+                snippets=[SimpleNamespace(text="Hola", start=0.0, duration=1.0)],
+                language="Spanish",
+                language_code="es",
+                is_generated=True,
+            ),
         ]
 
-        entries = fetch_transcript("dQw4w9WgXcQ", lang="en")
+        result = fetch_transcript("dQw4w9WgXcQ", lang="en")
 
-        self.assertEqual([TranscriptSegment(text="Hola", start=0.0, duration=1.0)], entries)
+        self.assertEqual([TranscriptSegment(text="Hola", start=0.0, duration=1.0)], result.segments)
+        self.assertTrue(result.is_generated)
+        self.assertEqual("es", result.language_code)
         self.assertEqual(2, fake_api.fetch.call_count)
         self.assertEqual(
             ("dQw4w9WgXcQ",),

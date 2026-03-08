@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -15,7 +16,7 @@ from xml.etree import ElementTree
 
 from src.adapters import BaseAdapter, FetchedItem
 from src.db import insert_content, link_content_topic
-from src.transcript import TranscriptNotAvailableError, fetch_transcript
+from src.transcript import TranscriptError, TranscriptResult, fetch_transcript
 
 _ATOM_NAMESPACE = {
     "atom": "http://www.w3.org/2005/Atom",
@@ -41,7 +42,7 @@ class YouTubeAdapter(BaseAdapter):
     def __init__(
         self,
         feed_fetcher: Callable[[str], str] | None = None,
-        transcript_fetcher: Callable[[str], list] | None = None,
+        transcript_fetcher: Callable[[str], TranscriptResult] | None = None,
     ) -> None:
         self._feed_fetcher = feed_fetcher or _fetch_feed
         self._transcript_fetcher = transcript_fetcher or fetch_transcript
@@ -64,14 +65,19 @@ class YouTubeAdapter(BaseAdapter):
         items: list[FetchedItem] = []
         for video in discovered_videos:
             try:
-                transcript_segments = self._transcript_fetcher(video.video_id)
-                transcript_text = "\n".join(segment.text for segment in transcript_segments)
+                result = self._transcript_fetcher(video.video_id)
+                transcript_segments = result.segments
+                transcript_text = "\n".join(s.text for s in transcript_segments)
                 transcript_available = True
-            except TranscriptNotAvailableError:
+                is_generated = result.is_generated
+                transcript_language = result.language_code
+            except TranscriptError:
                 transcript_segments = []
                 transcript_text = ""
                 transcript_available = False
-                logger.info(
+                is_generated = None
+                transcript_language = None
+                logger.warning(
                     "youtube_transcript_missing",
                     extra={"video_id": video.video_id, "url": video.url},
                 )
@@ -82,6 +88,8 @@ class YouTubeAdapter(BaseAdapter):
                 "channel_title": video.author,
                 "transcript_available": transcript_available,
                 "transcript_segment_count": len(transcript_segments),
+                "transcript_is_generated": is_generated,
+                "transcript_language": transcript_language,
             }
 
             items.append(
@@ -140,7 +148,7 @@ def ingest_youtube_source(
     missing_transcripts = 0
 
     for item in items:
-        artifact_path = output_dir / f"{item.source_id}.json"
+        artifact_path = output_dir / _build_artifact_filename(item)
 
         if insert_content(conn, item, str(artifact_path)):
             _write_item_artifact(artifact_path, item)
@@ -173,6 +181,20 @@ def ingest_youtube_source(
         },
     )
     return result
+
+
+def _slugify(text: str) -> str:
+    """Convert text to a filesystem-safe slug."""
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+
+
+def _build_artifact_filename(item: FetchedItem) -> str:
+    """Build a human-readable artifact filename from item metadata."""
+    channel = _slugify(item.author or "unknown")
+    title = _slugify(item.title or "untitled")
+    base = f"{channel}_{title}__{item.source_id}"
+    # Truncate to 200 chars to stay under ext4's 255 limit with .json suffix
+    return base[:200] + ".json"
 
 
 def _build_feed_url(source_config: dict) -> tuple[str, dict[str, str]]:

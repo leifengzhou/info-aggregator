@@ -28,6 +28,8 @@
 | P1-REF-003 | Add `__main__.py` for `src` package | senior-dev | done | - | `python -m src fetch` works as equivalent to `python -m src.main fetch` |
 | P1-REF-004 | Add requirements-dev.txt for test dependencies | senior-dev | done | - | `pytest` and other dev-only deps listed separately from runtime deps |
 | P1-BUG-002 | Timezone inconsistency in --since filtering | senior-dev | done | - | `published_at` values stored with consistent timezone handling; `--since` filter works correctly regardless of source timezone |
+| P1-REF-005 | Surface transcript generation type metadata | architect | done | - | `fetch_transcript()` returns `TranscriptResult` with `is_generated`, `language`, `language_code`; adapter surfaces in metadata; db.py log levels demoted |
+| P1-REF-006 | Human-readable artifact file naming | architect | done | P1-REF-005 | Artifacts named `{channel}_{title}__{id}.json`; truncated to 200 chars; video ID guarantees uniqueness |
 
 ## User Story -> Task Mapping
 - **US-001** (config): P1-001, P1-002

@@ -9,6 +9,13 @@ Every agent working on this project (Codex, Claude Code, Gemini) MUST follow the
 - **Tech Spec**: `TECH_SPEC.md` (architecture, schemas, interfaces, CLI reference)
 - **Stack**: Python 3.11+, SQLite, local filesystem, DeepSeek/MiniMax LLM
 
+## Development Environment
+
+- Project uses `.venv/` at the project root
+- All Python commands MUST use `.venv/bin/python` (never bare `python3`)
+- Examples: `.venv/bin/python -m pytest tests/ -v`, `.venv/bin/python -m src.main fetch`
+- If deps seem missing: `uv pip install -r requirements.txt -r requirements-dev.txt`
+
 ## Agent Roles
 
 | Agent | Role | Config File | Workspace |

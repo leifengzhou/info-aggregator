@@ -9,9 +9,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.error import HTTPError
 
-from src.adapters.youtube import YouTubeAdapter, ingest_youtube_source
+from src.adapters import FetchedItem
+from src.adapters.youtube import (
+    YouTubeAdapter,
+    _build_artifact_filename,
+    _slugify,
+    ingest_youtube_source,
+)
 from src.db import get_content_by_topic, init_db
-from src.transcript import TranscriptNotAvailableError, TranscriptSegment
+from src.transcript import TranscriptNotAvailableError, TranscriptResult, TranscriptSegment
 
 _FEED_XML = """\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -39,13 +45,27 @@ _FEED_XML = """\
 """
 
 
+def _make_transcript_result(
+    segments: list[TranscriptSegment],
+    language: str = "English",
+    language_code: str = "en",
+    is_generated: bool = False,
+) -> TranscriptResult:
+    return TranscriptResult(
+        segments=segments,
+        language=language,
+        language_code=language_code,
+        is_generated=is_generated,
+    )
+
+
 class TestYouTubeAdapterFetch(unittest.TestCase):
     def test_fetch_discovers_videos_from_rss(self) -> None:
         adapter = YouTubeAdapter(
             feed_fetcher=lambda _url: _FEED_XML,
-            transcript_fetcher=lambda _video_id: [
-                TranscriptSegment(text="Hello world", start=0.0, duration=1.0)
-            ],
+            transcript_fetcher=lambda _video_id: _make_transcript_result(
+                [TranscriptSegment(text="Hello world", start=0.0, duration=1.0)]
+            ),
         )
 
         items = adapter.fetch({"channel_id": "channel-123"})
@@ -54,12 +74,14 @@ class TestYouTubeAdapterFetch(unittest.TestCase):
         self.assertEqual("vid00000001", items[0].source_id)
         self.assertEqual("Hello world", items[0].content)
         self.assertTrue(items[0].metadata["transcript_available"])
+        self.assertFalse(items[0].metadata["transcript_is_generated"])
+        self.assertEqual("en", items[0].metadata["transcript_language"])
         self.assertEqual("channel-123", items[0].metadata["channel_id"])
 
     def test_fetch_applies_since_filter(self) -> None:
         adapter = YouTubeAdapter(
             feed_fetcher=lambda _url: _FEED_XML,
-            transcript_fetcher=lambda _video_id: [],
+            transcript_fetcher=lambda _video_id: _make_transcript_result([]),
         )
 
         items = adapter.fetch(
@@ -80,6 +102,8 @@ class TestYouTubeAdapterFetch(unittest.TestCase):
         self.assertEqual("", items[0].content)
         self.assertFalse(items[0].metadata["transcript_available"])
         self.assertEqual(0, items[0].metadata["transcript_segment_count"])
+        self.assertIsNone(items[0].metadata["transcript_is_generated"])
+        self.assertIsNone(items[0].metadata["transcript_language"])
 
     def test_fetch_logs_warning_and_returns_empty_on_http_error(self) -> None:
         def failing_feed_fetcher(url: str) -> str:
@@ -110,10 +134,10 @@ class TestYouTubeIngestion(unittest.TestCase):
     def test_ingest_persists_to_db_and_filesystem(self) -> None:
         adapter = YouTubeAdapter(
             feed_fetcher=lambda _url: _FEED_XML,
-            transcript_fetcher=lambda _video_id: [
+            transcript_fetcher=lambda _video_id: _make_transcript_result([
                 TranscriptSegment(text="Line one", start=0.0, duration=1.0),
                 TranscriptSegment(text="Line two", start=1.0, duration=1.0),
-            ],
+            ]),
         )
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -133,7 +157,7 @@ class TestYouTubeIngestion(unittest.TestCase):
             rows = get_content_by_topic(self.conn, "ai-research")
             self.assertEqual(2, len(rows))
 
-            artifact_path = Path(temp_dir) / "vid00000001.json"
+            artifact_path = Path(temp_dir) / "channel-one_newest-video__vid00000001.json"
             payload = json.loads(artifact_path.read_text(encoding="utf-8"))
             self.assertEqual("Line one\nLine two", payload["content"])
             self.assertTrue(payload["metadata"]["transcript_available"])
@@ -141,9 +165,9 @@ class TestYouTubeIngestion(unittest.TestCase):
     def test_ingest_dedups_existing_content_and_links_second_topic(self) -> None:
         adapter = YouTubeAdapter(
             feed_fetcher=lambda _url: _FEED_XML,
-            transcript_fetcher=lambda _video_id: [
+            transcript_fetcher=lambda _video_id: _make_transcript_result([
                 TranscriptSegment(text="Only line", start=0.0, duration=1.0)
-            ],
+            ]),
         )
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -179,7 +203,9 @@ class TestYouTubeIngestion(unittest.TestCase):
         def transcript_fetcher(video_id: str):
             if video_id == "vid00000002":
                 raise TranscriptNotAvailableError("No transcript")
-            return [TranscriptSegment(text="Available", start=0.0, duration=1.0)]
+            return _make_transcript_result(
+                [TranscriptSegment(text="Available", start=0.0, duration=1.0)]
+            )
 
         adapter = YouTubeAdapter(
             feed_fetcher=lambda _url: _FEED_XML,
@@ -196,9 +222,64 @@ class TestYouTubeIngestion(unittest.TestCase):
             )
 
             self.assertEqual(1, result.missing_transcripts)
-            payload = json.loads((Path(temp_dir) / "vid00000002.json").read_text(encoding="utf-8"))
+            payload = json.loads((Path(temp_dir) / "channel-one_older-video__vid00000002.json").read_text(encoding="utf-8"))
             self.assertEqual("", payload["content"])
             self.assertFalse(payload["metadata"]["transcript_available"])
+
+
+class TestSlugifyAndFilename(unittest.TestCase):
+    def test_slugify_basic(self) -> None:
+        self.assertEqual("hello-world", _slugify("Hello World"))
+
+    def test_slugify_special_chars(self) -> None:
+        self.assertEqual("test-video-2024", _slugify("Test Video! @#$ (2024)"))
+
+    def test_slugify_strips_leading_trailing_hyphens(self) -> None:
+        self.assertEqual("hello", _slugify("---hello---"))
+
+    def test_slugify_empty_string(self) -> None:
+        self.assertEqual("", _slugify(""))
+
+    def test_build_artifact_filename_basic(self) -> None:
+        item = FetchedItem(
+            source_id="abc123xyz_-",
+            source_type="youtube",
+            url="https://example.com",
+            title="My Great Video",
+            author="Some Channel",
+            published_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            content="",
+            metadata={},
+        )
+        self.assertEqual("some-channel_my-great-video__abc123xyz_-.json", _build_artifact_filename(item))
+
+    def test_build_artifact_filename_missing_author(self) -> None:
+        item = FetchedItem(
+            source_id="vid123456789",
+            source_type="youtube",
+            url="https://example.com",
+            title="A Title",
+            author=None,
+            published_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            content="",
+            metadata={},
+        )
+        self.assertEqual("unknown_a-title__vid123456789.json", _build_artifact_filename(item))
+
+    def test_build_artifact_filename_truncates_long_names(self) -> None:
+        item = FetchedItem(
+            source_id="vid123456789",
+            source_type="youtube",
+            url="https://example.com",
+            title="A" * 300,
+            author="B" * 100,
+            published_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            content="",
+            metadata={},
+        )
+        filename = _build_artifact_filename(item)
+        self.assertTrue(len(filename) <= 205)  # 200 + len(".json")
+        self.assertTrue(filename.endswith(".json"))
 
 
 if __name__ == "__main__":

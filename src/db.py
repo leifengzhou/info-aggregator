@@ -78,7 +78,7 @@ def insert_content(conn: sqlite3.Connection, item: FetchedItem, content_path: st
     )
     conn.commit()
     inserted = cursor.rowcount > 0
-    logger.info(
+    logger.debug(
         "content_insert_attempt",
         extra={
             "content_id": item.source_id,
@@ -97,7 +97,7 @@ def link_content_topic(conn: sqlite3.Connection, content_id: str, topic: str) ->
         (content_id, topic),
     )
     conn.commit()
-    logger.info(
+    logger.debug(
         "content_topic_linked",
         extra={
             "content_id": content_id,
@@ -111,7 +111,7 @@ def content_exists(conn: sqlite3.Connection, content_id: str) -> bool:
     """Check if content with the given ID already exists."""
     row = conn.execute("SELECT 1 FROM content WHERE id = ?", (content_id,)).fetchone()
     exists = row is not None
-    logger.info("content_exists_checked", extra={"content_id": content_id, "exists": exists})
+    logger.debug("content_exists_checked", extra={"content_id": content_id, "exists": exists})
     return exists
 
 
