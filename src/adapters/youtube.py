@@ -14,7 +14,7 @@ from urllib.request import urlopen
 from xml.etree import ElementTree
 
 from src.adapters import BaseAdapter, FetchedItem
-from src.db import content_exists, insert_content, link_content_topic
+from src.db import insert_content, link_content_topic
 from src.transcript import TranscriptNotAvailableError, fetch_transcript
 
 _ATOM_NAMESPACE = {
@@ -140,13 +140,11 @@ def ingest_youtube_source(
     missing_transcripts = 0
 
     for item in items:
-        already_exists = content_exists(conn, item.source_id)
         artifact_path = output_dir / f"{item.source_id}.json"
 
-        if not already_exists:
+        if insert_content(conn, item, str(artifact_path)):
             _write_item_artifact(artifact_path, item)
-            if insert_content(conn, item, str(artifact_path)):
-                inserted += 1
+            inserted += 1
         else:
             deduped += 1
 

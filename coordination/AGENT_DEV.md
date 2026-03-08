@@ -6,7 +6,7 @@
 - Hand off to QA with clear context on what changed and how to validate.
 
 ## Active Work
-- Current Task ID: P1-REF-001
+- Current Task ID: P1-REF-002
 - Status: in_review
 - Started: 2026-03-08
 
@@ -14,12 +14,12 @@
 - None yet.
 
 ## Handoff to QA
-- Task ID: P1-REF-001
-- Behavior changed: Simplified `run_fetch()` summary accumulation to use direct mutable counters and construct `FetchSummary` only once at the end, preserving the existing CLI and return behavior while removing repeated dataclass rebuilding inside the loops.
-- Files touched: src/main.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md
-- Tests run: `python3 -m unittest tests.test_main`; `python3 -m compileall src tests`
-- Known risks: This is an internal refactor only; current coverage exercises the happy-path totals and topic filtering, but not every possible adapter failure path.
-- Suggested validation: Run `python3 -m unittest tests.test_main` and spot-check `python3 -m src.main fetch --topic ai-research` to confirm the printed summary is unchanged.
+- Task ID: P1-REF-002
+- Behavior changed: Removed the redundant `content_exists()` pre-check from YouTube ingestion. Dedup now relies on the existing `insert_content()` return value, which keeps the same external behavior with one fewer DB query per fetched item.
+- Files touched: src/adapters/youtube.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md
+- Tests run: `python3 -m unittest tests.test_youtube_adapter tests.test_db`; `python3 -m compileall src tests`
+- Known risks: Artifact files are now written only after a successful insert, so a filesystem write failure would leave a DB row pointing at an expected path without the file. Existing tests do not simulate that failure mode.
+- Suggested validation: Run `python3 -m unittest tests.test_youtube_adapter tests.test_db` and spot-check a duplicate fetch run to confirm inserts stay at 0 while topic links still dedupe cleanly.
 - Date: 2026-03-08
 
 ## Handoff History
@@ -36,3 +36,4 @@
 | P1-CLEANUP-001 | 2026-03-08 | coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `find . -maxdepth 2 \( -path './.git' -o -path './coordination/.git' \) -prune -o -type d -name '.venv' -print`; `git status --short --untracked-files=all` | Root `.venv/` remains intentionally; task scope only covered nested `coordination/.venv/` and stray `test_p1.db*` artifacts |
 | P1-CLEANUP-002 | 2026-03-08 | config/topics.yaml, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_config`; live RSS `curl` check for every configured `channel_id` in `config/topics.yaml` | `TECH_SPEC.md` still references the stale old channel example until architect syncs the document |
 | P1-REF-001 | 2026-03-08 | src/main.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_main`; `python3 -m compileall src tests` | Internal refactor only; adapter error-path aggregation remains covered indirectly rather than by dedicated new tests |
+| P1-REF-002 | 2026-03-08 | src/adapters/youtube.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_youtube_adapter tests.test_db`; `python3 -m compileall src tests` | DB insert is now the sole dedup gate; filesystem write failures after insert are not specially recovered |
