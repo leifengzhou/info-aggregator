@@ -6,7 +6,7 @@
 - Hand off to QA with clear context on what changed and how to validate.
 
 ## Active Work
-- Current Task ID: P1-CLEANUP-002
+- Current Task ID: P1-REF-001
 - Status: in_review
 - Started: 2026-03-08
 
@@ -14,12 +14,12 @@
 - None yet.
 
 ## Handoff to QA
-- Task ID: P1-CLEANUP-002
-- Behavior changed: Replaced the broken default YouTube `channel_id` in `config/topics.yaml` with a verified live channel feed so the shipped sample config no longer contains a guaranteed 404 source.
-- Files touched: config/topics.yaml, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md
-- Tests run: `python3 -m unittest tests.test_config`; `for cid in $(rg -No 'channel_id: \"([^\"]+)\"' -r '$1' config/topics.yaml); do curl -fsSL --max-time 20 \"https://www.youtube.com/feeds/videos.xml?channel_id=$cid\" >/dev/null; done`
-- Known risks: `TECH_SPEC.md` still contains the original stale comment/example for the old channel ID, so the spec document may drift from the default config until architect updates it.
-- Suggested validation: Run `python3 -m src.main fetch --topic ai-research` against the default config and confirm both configured YouTube feeds fetch without 404 warnings.
+- Task ID: P1-REF-001
+- Behavior changed: Simplified `run_fetch()` summary accumulation to use direct mutable counters and construct `FetchSummary` only once at the end, preserving the existing CLI and return behavior while removing repeated dataclass rebuilding inside the loops.
+- Files touched: src/main.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md
+- Tests run: `python3 -m unittest tests.test_main`; `python3 -m compileall src tests`
+- Known risks: This is an internal refactor only; current coverage exercises the happy-path totals and topic filtering, but not every possible adapter failure path.
+- Suggested validation: Run `python3 -m unittest tests.test_main` and spot-check `python3 -m src.main fetch --topic ai-research` to confirm the printed summary is unchanged.
 - Date: 2026-03-08
 
 ## Handoff History
@@ -35,3 +35,4 @@
 | P1-008 | 2026-03-08 | src/logging_setup.py, src/main.py, src/db.py, src/adapters/youtube.py, tests/test_logging_setup.py, tests/test_main.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_logging_setup`; full unit suite; `python3 -m compileall src tests` | Console/file logs are intentionally verbose JSON lines; transcript fetch failures remain separate from feed warnings |
 | P1-CLEANUP-001 | 2026-03-08 | coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `find . -maxdepth 2 \( -path './.git' -o -path './coordination/.git' \) -prune -o -type d -name '.venv' -print`; `git status --short --untracked-files=all` | Root `.venv/` remains intentionally; task scope only covered nested `coordination/.venv/` and stray `test_p1.db*` artifacts |
 | P1-CLEANUP-002 | 2026-03-08 | config/topics.yaml, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_config`; live RSS `curl` check for every configured `channel_id` in `config/topics.yaml` | `TECH_SPEC.md` still references the stale old channel example until architect syncs the document |
+| P1-REF-001 | 2026-03-08 | src/main.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_main`; `python3 -m compileall src tests` | Internal refactor only; adapter error-path aggregation remains covered indirectly rather than by dedicated new tests |

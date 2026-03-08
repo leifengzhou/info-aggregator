@@ -131,28 +131,17 @@ def run_fetch(
 
     conn = init_db(str(db_path))
     try:
-        summary = FetchSummary(
-            topics_processed=0,
-            youtube_sources_processed=0,
-            discovered=0,
-            inserted=0,
-            deduped=0,
-            linked=0,
-            missing_transcripts=0,
-            skipped_sources=0,
-        )
+        topics_processed = 0
+        youtube_sources_processed = 0
+        discovered = 0
+        inserted = 0
+        deduped = 0
+        linked = 0
+        missing_transcripts = 0
+        skipped_sources = 0
 
         for topic_config in topics:
-            summary = FetchSummary(
-                topics_processed=summary.topics_processed + 1,
-                youtube_sources_processed=summary.youtube_sources_processed,
-                discovered=summary.discovered,
-                inserted=summary.inserted,
-                deduped=summary.deduped,
-                linked=summary.linked,
-                missing_transcripts=summary.missing_transcripts,
-                skipped_sources=summary.skipped_sources,
-            )
+            topics_processed += 1
 
             for source_type, entries in topic_config.sources.items():
                 if source_type != "youtube":
@@ -164,16 +153,7 @@ def run_fetch(
                             "entry_count": len(entries),
                         },
                     )
-                    summary = FetchSummary(
-                        topics_processed=summary.topics_processed,
-                        youtube_sources_processed=summary.youtube_sources_processed,
-                        discovered=summary.discovered,
-                        inserted=summary.inserted,
-                        deduped=summary.deduped,
-                        linked=summary.linked,
-                        missing_transcripts=summary.missing_transcripts,
-                        skipped_sources=summary.skipped_sources + len(entries),
-                    )
+                    skipped_sources += len(entries)
                     continue
 
                 for source_config in entries:
@@ -188,16 +168,23 @@ def run_fetch(
                         content_root=content_root / "youtube",
                         since=since,
                     )
-                    summary = FetchSummary(
-                        topics_processed=summary.topics_processed,
-                        youtube_sources_processed=summary.youtube_sources_processed + 1,
-                        discovered=summary.discovered + result.discovered,
-                        inserted=summary.inserted + result.inserted,
-                        deduped=summary.deduped + result.deduped,
-                        linked=summary.linked + result.linked,
-                        missing_transcripts=summary.missing_transcripts + result.missing_transcripts,
-                        skipped_sources=summary.skipped_sources,
-                    )
+                    youtube_sources_processed += 1
+                    discovered += result.discovered
+                    inserted += result.inserted
+                    deduped += result.deduped
+                    linked += result.linked
+                    missing_transcripts += result.missing_transcripts
+
+        summary = FetchSummary(
+            topics_processed=topics_processed,
+            youtube_sources_processed=youtube_sources_processed,
+            discovered=discovered,
+            inserted=inserted,
+            deduped=deduped,
+            linked=linked,
+            missing_transcripts=missing_transcripts,
+            skipped_sources=skipped_sources,
+        )
 
         logger.info(
             "fetch_run_completed",
