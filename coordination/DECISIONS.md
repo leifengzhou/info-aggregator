@@ -80,3 +80,24 @@ Use one entry per decision.
 - Decision: Accept channel_handle as a config locator. At fetch time, if channel_id is absent, call yt-dlp to resolve the handle. No config mutation. Resolution is per-run (cheap — one subprocess call per handle, not per video).
 - Consequences: Slight per-run overhead for unresolved handles (~1-2s). No new dependencies. If resolution fails, source is skipped with a WARNING.
 - Owner: architect
+
+---
+
+### DEC-008: Use yt-dlp Python API as the transcript backend
+- Date: 2026-03-08
+- Status: accepted
+- Context: `youtube-transcript-api` fails silently on videos with auto-generated captions because YouTube's bot detection blocks its page-scraping approach. yt-dlp is already a project dependency (channel handle resolution), has active YouTube anti-bot maintenance, and naturally accesses the same subtitle data used by tools like NotebookLM and Tactiq. A 429 rate-limit error hit when testing yt-dlp directly — root cause is missing `curl-cffi` for browser impersonation.
+- Decision:
+  - Replace `youtube-transcript-api` with the `yt_dlp.YoutubeDL` Python API in `src/transcript/extractor.py`.
+  - Do not use subprocess; use the Python library directly.
+  - Prefer `json3` subtitle format (YouTube-native: `events[].segs[].utf8`); fall back to `vtt`.
+  - Add `curl-cffi` as a runtime dependency — yt-dlp uses it automatically for Chrome impersonation when present.
+  - Add retry-with-exponential-backoff on HTTP 429 inside the extractor (catch `yt_dlp.utils.DownloadError` with "429" in message).
+  - Add optional `youtube_cookies_file` setting (path to cookies.txt) as a third-layer fallback for persistent 429s.
+  - Public interface (`TranscriptResult`, `TranscriptSegment`, `fetch_transcript()` signature) is preserved — zero breaking changes to callers.
+- Consequences:
+  - `youtube-transcript-api` removed from requirements.txt; `curl-cffi>=0.7,<1.0` added.
+  - Two new private seam functions (`_extract_info`, `_download_subtitle_content`) replace `_build_api`; extractor tests mock these instead.
+  - Two new `Settings` fields: `youtube_transcript_max_retries: int = 3`, `youtube_cookies_file: str | None = None`.
+  - Retry adds up to `max_retries × retry_delay` latency on persistent 429; acceptable since delay is configurable.
+- Owner: architect

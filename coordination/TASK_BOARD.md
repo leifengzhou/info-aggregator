@@ -47,6 +47,7 @@
 | P2-FUTURE-004 | Analysis pipeline: filter transcript_available=False | senior-dev | todo | - | Analysis pipeline skips items where artifact metadata.transcript_available is false |
 | P1-010 | fetch_since per-topic config field | senior-dev | todo | - | topic.fetch_since parsed from YAML and used as default since; CLI --since overrides for that run |
 | P1-011 | Channel handle auto-resolution | senior-dev | todo | - | channel_handle accepted in config YAML; resolved to channel_id via yt-dlp at fetch time; if resolution fails, source is skipped with WARNING |
+| P1-012 | Switch transcript backend to yt-dlp | senior-dev | todo | P1-011 | `youtube-transcript-api` removed; `yt_dlp.YoutubeDL` Python API used directly; `curl-cffi` added to requirements.txt; retry on 429 (configurable); `youtube_cookies_file` and `youtube_transcript_max_retries` settings added; all existing tests pass with updated mocks |
 
 ## User Story -> Task Mapping
 - **US-001** (config): P1-001, P1-002
