@@ -50,6 +50,10 @@ class YouTubeAdapter(BaseAdapter):
         self, source_config: dict, since: datetime | None = None
     ) -> list[FetchedItem]:
         feed_url, locator_metadata = _build_feed_url(source_config)
+        logger.info(
+            "youtube_fetch_started",
+            extra={"feed_url": feed_url, "since": since.isoformat() if since else None, **locator_metadata},
+        )
         try:
             feed_xml = self._feed_fetcher(feed_url)
             discovered_videos = _parse_feed(feed_xml, since=since)
@@ -67,6 +71,10 @@ class YouTubeAdapter(BaseAdapter):
                 transcript_segments = []
                 transcript_text = ""
                 transcript_available = False
+                logger.info(
+                    "youtube_transcript_missing",
+                    extra={"video_id": video.video_id, "url": video.url},
+                )
 
             metadata = {
                 **locator_metadata,
@@ -89,6 +97,10 @@ class YouTubeAdapter(BaseAdapter):
                 )
             )
 
+        logger.info(
+            "youtube_fetch_completed",
+            extra={"feed_url": feed_url, "item_count": len(items), **locator_metadata},
+        )
         return items
 
 
@@ -113,6 +125,10 @@ def ingest_youtube_source(
 ) -> YouTubeIngestResult:
     """Fetch, persist, and link YouTube items for a single topic/source."""
 
+    logger.info(
+        "youtube_ingest_started",
+        extra={"topic": topic, "since": since.isoformat() if since else None},
+    )
     active_adapter = adapter or YouTubeAdapter()
     items = active_adapter.fetch(source_config, since=since)
     output_dir = Path(content_root)
@@ -140,13 +156,25 @@ def ingest_youtube_source(
         if not item.metadata.get("transcript_available", True):
             missing_transcripts += 1
 
-    return YouTubeIngestResult(
+    result = YouTubeIngestResult(
         discovered=len(items),
         inserted=inserted,
         deduped=deduped,
         linked=linked,
         missing_transcripts=missing_transcripts,
     )
+    logger.info(
+        "youtube_ingest_completed",
+        extra={
+            "topic": topic,
+            "discovered": result.discovered,
+            "inserted": result.inserted,
+            "deduped": result.deduped,
+            "linked": result.linked,
+            "missing_transcripts": result.missing_transcripts,
+        },
+    )
+    return result
 
 
 def _build_feed_url(source_config: dict) -> tuple[str, dict[str, str]]:

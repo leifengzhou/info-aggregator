@@ -1,9 +1,12 @@
 """SQLite storage layer for content and digests."""
 
+import logging
 import sqlite3
 from datetime import datetime
 
 from src.adapters import FetchedItem
+
+logger = logging.getLogger(__name__)
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS content (
@@ -51,6 +54,7 @@ def init_db(db_path: str) -> sqlite3.Connection:
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
     conn.executescript(_SCHEMA)
+    logger.info("db_initialized", extra={"db_path": db_path})
     return conn
 
 
@@ -64,22 +68,42 @@ def insert_content(conn: sqlite3.Connection, item: FetchedItem, content_path: st
          content_path),
     )
     conn.commit()
-    return cursor.rowcount > 0
+    inserted = cursor.rowcount > 0
+    logger.info(
+        "content_insert_attempt",
+        extra={
+            "content_id": item.source_id,
+            "source_type": item.source_type,
+            "inserted": inserted,
+            "content_path": content_path,
+        },
+    )
+    return inserted
 
 
 def link_content_topic(conn: sqlite3.Connection, content_id: str, topic: str) -> None:
     """Insert content_topics row (ignore if exists)."""
-    conn.execute(
+    cursor = conn.execute(
         "INSERT OR IGNORE INTO content_topics (content_id, topic) VALUES (?, ?)",
         (content_id, topic),
     )
     conn.commit()
+    logger.info(
+        "content_topic_linked",
+        extra={
+            "content_id": content_id,
+            "topic": topic,
+            "inserted": cursor.rowcount > 0,
+        },
+    )
 
 
 def content_exists(conn: sqlite3.Connection, content_id: str) -> bool:
     """Check if content with the given ID already exists."""
     row = conn.execute("SELECT 1 FROM content WHERE id = ?", (content_id,)).fetchone()
-    return row is not None
+    exists = row is not None
+    logger.info("content_exists_checked", extra={"content_id": content_id, "exists": exists})
+    return exists
 
 
 def get_content_by_topic(conn: sqlite3.Connection, topic: str, since: datetime | None = None) -> list[sqlite3.Row]:
@@ -100,6 +124,10 @@ def get_content_by_topic(conn: sqlite3.Connection, topic: str, since: datetime |
                ORDER BY c.published_at DESC""",
             (topic,),
         ).fetchall()
+    logger.info(
+        "content_by_topic_queried",
+        extra={"topic": topic, "since": since.isoformat() if since else None, "row_count": len(rows)},
+    )
     return rows
 
 
@@ -112,3 +140,13 @@ def insert_digest(conn: sqlite3.Connection, topic: str, period_start: datetime,
         (topic, period_start.isoformat(), period_end.isoformat(), file_path, item_count),
     )
     conn.commit()
+    logger.info(
+        "digest_inserted",
+        extra={
+            "topic": topic,
+            "period_start": period_start.isoformat(),
+            "period_end": period_end.isoformat(),
+            "file_path": file_path,
+            "item_count": item_count,
+        },
+    )

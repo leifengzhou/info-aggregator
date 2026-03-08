@@ -142,6 +142,8 @@ class TestMain(unittest.TestCase):
                         str(Path(temp_dir) / "aggregator.db"),
                         "--content-root",
                         str(Path(temp_dir) / "content"),
+                        "--log-file",
+                        str(Path(temp_dir) / "logs" / "app.log"),
                         "--topic",
                         "politics-us",
                         "--since",
@@ -168,6 +170,8 @@ class TestMain(unittest.TestCase):
                         str(config_path),
                         "--db",
                         str(Path(temp_dir) / "aggregator.db"),
+                        "--log-file",
+                        str(Path(temp_dir) / "logs" / "app.log"),
                         "--topic",
                         "unknown-topic",
                     ]

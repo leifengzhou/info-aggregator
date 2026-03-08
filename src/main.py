@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -11,6 +12,9 @@ from typing import Callable
 from src.adapters.youtube import YouTubeIngestResult, ingest_youtube_source
 from src.config import AppConfig, load_config
 from src.db import init_db
+from src.logging_setup import setup_logging
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -58,6 +62,16 @@ def build_parser() -> argparse.ArgumentParser:
         type=parse_since,
         help="Only fetch content published on or after this date/time",
     )
+    fetch_parser.add_argument(
+        "--log-level",
+        default="INFO",
+        help="Log level for structured console/file logging",
+    )
+    fetch_parser.add_argument(
+        "--log-file",
+        default="data/logs/info-aggregator.log",
+        help="Path to the structured log file",
+    )
 
     return parser
 
@@ -70,6 +84,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.command == "fetch":
+            setup_logging(level=args.log_level, log_file=args.log_file)
             summary = run_fetch(
                 config_path=args.config,
                 db_path=args.db,
@@ -98,6 +113,17 @@ def run_fetch(
 
     config = config_loader(config_path)
     topics = _select_topics(config, topic)
+    logger.info(
+        "fetch_run_started",
+        extra={
+            "config_path": str(config_path),
+            "db_path": str(db_path),
+            "content_root": str(content_root),
+            "topic": topic,
+            "since": since.isoformat() if since else None,
+            "topic_count": len(topics),
+        },
+    )
 
     db_path = Path(db_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -130,6 +156,14 @@ def run_fetch(
 
             for source_type, entries in topic_config.sources.items():
                 if source_type != "youtube":
+                    logger.info(
+                        "source_type_skipped",
+                        extra={
+                            "topic": topic_config.slug,
+                            "source_type": source_type,
+                            "entry_count": len(entries),
+                        },
+                    )
                     summary = FetchSummary(
                         topics_processed=summary.topics_processed,
                         youtube_sources_processed=summary.youtube_sources_processed,
@@ -143,6 +177,10 @@ def run_fetch(
                     continue
 
                 for source_config in entries:
+                    logger.info(
+                        "youtube_source_processing",
+                        extra={"topic": topic_config.slug, "source_config": source_config},
+                    )
                     result = youtube_ingestor(
                         conn=conn,
                         topic=topic_config.slug,
@@ -161,6 +199,19 @@ def run_fetch(
                         skipped_sources=summary.skipped_sources,
                     )
 
+        logger.info(
+            "fetch_run_completed",
+            extra={
+                "topics_processed": summary.topics_processed,
+                "youtube_sources_processed": summary.youtube_sources_processed,
+                "discovered": summary.discovered,
+                "inserted": summary.inserted,
+                "deduped": summary.deduped,
+                "linked": summary.linked,
+                "missing_transcripts": summary.missing_transcripts,
+                "skipped_sources": summary.skipped_sources,
+            },
+        )
         return summary
     finally:
         conn.close()
