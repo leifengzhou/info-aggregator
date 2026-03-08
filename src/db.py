@@ -2,7 +2,7 @@
 
 import logging
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 
 from src.adapters import FetchedItem
 
@@ -47,6 +47,14 @@ CREATE INDEX IF NOT EXISTS idx_content_topics_score ON content_topics(relevance_
 """
 
 
+def _normalize_datetime(value: datetime) -> datetime:
+    """Normalize datetimes to timezone-aware UTC values for consistent storage/querying."""
+
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
 def init_db(db_path: str) -> sqlite3.Connection:
     """Create tables if not exist, enable WAL mode and foreign keys, return connection."""
     conn = sqlite3.connect(db_path)
@@ -60,11 +68,12 @@ def init_db(db_path: str) -> sqlite3.Connection:
 
 def insert_content(conn: sqlite3.Connection, item: FetchedItem, content_path: str) -> bool:
     """Insert a content row. Returns False if already exists (dedup by primary key)."""
+    published_at = _normalize_datetime(item.published_at) if item.published_at else None
     cursor = conn.execute(
         """INSERT OR IGNORE INTO content (id, source_type, url, title, author, published_at, content_path)
            VALUES (?, ?, ?, ?, ?, ?, ?)""",
         (item.source_id, item.source_type, item.url, item.title,
-         item.author, item.published_at.isoformat() if item.published_at else None,
+         item.author, published_at.isoformat() if published_at else None,
          content_path),
     )
     conn.commit()
@@ -109,12 +118,13 @@ def content_exists(conn: sqlite3.Connection, content_id: str) -> bool:
 def get_content_by_topic(conn: sqlite3.Connection, topic: str, since: datetime | None = None) -> list[sqlite3.Row]:
     """Query content linked to a topic, optionally filtered by published_at >= since."""
     if since is not None:
+        normalized_since = _normalize_datetime(since)
         rows = conn.execute(
             """SELECT c.* FROM content c
                JOIN content_topics ct ON c.id = ct.content_id
                WHERE ct.topic = ? AND c.published_at >= ?
                ORDER BY c.published_at DESC""",
-            (topic, since.isoformat()),
+            (topic, normalized_since.isoformat()),
         ).fetchall()
     else:
         rows = conn.execute(
@@ -126,7 +136,11 @@ def get_content_by_topic(conn: sqlite3.Connection, topic: str, since: datetime |
         ).fetchall()
     logger.info(
         "content_by_topic_queried",
-        extra={"topic": topic, "since": since.isoformat() if since else None, "row_count": len(rows)},
+        extra={
+            "topic": topic,
+            "since": _normalize_datetime(since).isoformat() if since else None,
+            "row_count": len(rows),
+        },
     )
     return rows
 
@@ -134,18 +148,20 @@ def get_content_by_topic(conn: sqlite3.Connection, topic: str, since: datetime |
 def insert_digest(conn: sqlite3.Connection, topic: str, period_start: datetime,
                   period_end: datetime, file_path: str, item_count: int) -> None:
     """Record a generated digest."""
+    normalized_start = _normalize_datetime(period_start)
+    normalized_end = _normalize_datetime(period_end)
     conn.execute(
         """INSERT INTO digests (topic, period_start, period_end, file_path, item_count)
            VALUES (?, ?, ?, ?, ?)""",
-        (topic, period_start.isoformat(), period_end.isoformat(), file_path, item_count),
+        (topic, normalized_start.isoformat(), normalized_end.isoformat(), file_path, item_count),
     )
     conn.commit()
     logger.info(
         "digest_inserted",
         extra={
             "topic": topic,
-            "period_start": period_start.isoformat(),
-            "period_end": period_end.isoformat(),
+            "period_start": normalized_start.isoformat(),
+            "period_end": normalized_end.isoformat(),
             "file_path": file_path,
             "item_count": item_count,
         },

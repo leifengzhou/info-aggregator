@@ -6,7 +6,7 @@
 - Hand off to QA with clear context on what changed and how to validate.
 
 ## Active Work
-- Current Task ID: P1-REF-004
+- Current Task ID: P1-BUG-002
 - Status: in_review
 - Started: 2026-03-08
 
@@ -14,12 +14,12 @@
 - None yet.
 
 ## Handoff to QA
-- Task ID: P1-REF-004
-- Behavior changed: Added `requirements-dev.txt` to separate development-only dependencies from runtime requirements, with the dev file layering on top of `requirements.txt` and explicitly declaring `pytest`.
-- Files touched: requirements-dev.txt, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md
-- Tests run: `cat requirements-dev.txt`; `python3 -m unittest tests.test_db`; `python3 -m compileall src tests`
-- Known risks: `pytest` is declared but not installed in the current shell environment, so `python3 -m pytest --version` still fails until the dev requirements are installed.
-- Suggested validation: Run `uv pip install -r requirements-dev.txt` or `pip install -r requirements-dev.txt`, then confirm `python3 -m pytest --version` succeeds.
+- Task ID: P1-BUG-002
+- Behavior changed: Normalized `published_at`, digest period timestamps, and parsed `--since` values to timezone-aware UTC before storage and filtering. This removes offset-dependent string comparison bugs in SQLite and makes `--since` behavior consistent across mixed source timezones.
+- Files touched: src/db.py, src/main.py, tests/test_db.py, tests/test_main.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md
+- Tests run: `python3 -m unittest tests.test_db tests.test_main`; `python3 -m compileall src tests`
+- Known risks: Existing adapters other than YouTube are still unimplemented, so this fix is validated through DB and CLI regression tests rather than through multiple live source types.
+- Suggested validation: Run `python3 -m unittest tests.test_db tests.test_main` and verify that a record published with a non-UTC offset still matches an equivalent UTC `--since` cutoff.
 - Date: 2026-03-08
 
 ## Handoff History
@@ -39,3 +39,4 @@
 | P1-REF-002 | 2026-03-08 | src/adapters/youtube.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_youtube_adapter tests.test_db`; `python3 -m compileall src tests` | DB insert is now the sole dedup gate; filesystem write failures after insert are not specially recovered |
 | P1-REF-003 | 2026-03-08 | src/__main__.py, tests/test_module_entrypoint.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_module_entrypoint`; `python3 -m src --help`; `python3 -m compileall src tests` | Help/entrypoint path is covered; full live fetch via `python -m src` is not separately exercised |
 | P1-REF-004 | 2026-03-08 | requirements-dev.txt, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `cat requirements-dev.txt`; `python3 -m unittest tests.test_db`; `python3 -m compileall src tests` | `pytest` is declared but not installed in the current environment until the dev requirements are installed |
+| P1-BUG-002 | 2026-03-08 | src/db.py, src/main.py, tests/test_db.py, tests/test_main.py, coordination/TASK_BOARD.md, coordination/AGENT_DEV.md | `python3 -m unittest tests.test_db tests.test_main`; `python3 -m compileall src tests` | Fix is covered for DB and CLI normalization paths; additional source adapters will inherit it once implemented |

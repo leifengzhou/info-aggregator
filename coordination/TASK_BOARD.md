@@ -27,7 +27,7 @@
 | P1-REF-002 | Remove redundant content_exists check in YouTube adapter | senior-dev | in_review | - | `ingest_youtube_source` uses `insert_content` return value for dedup instead of separate query; test_youtube_adapter still passes |
 | P1-REF-003 | Add `__main__.py` for `src` package | senior-dev | in_review | - | `python -m src fetch` works as equivalent to `python -m src.main fetch` |
 | P1-REF-004 | Add requirements-dev.txt for test dependencies | senior-dev | in_review | - | `pytest` and other dev-only deps listed separately from runtime deps |
-| P1-BUG-002 | Timezone inconsistency in --since filtering | senior-dev | todo | - | `published_at` values stored with consistent timezone handling; `--since` filter works correctly regardless of source timezone |
+| P1-BUG-002 | Timezone inconsistency in --since filtering | senior-dev | in_review | - | `published_at` values stored with consistent timezone handling; `--since` filter works correctly regardless of source timezone |
 
 ## User Story -> Task Mapping
 - **US-001** (config): P1-001, P1-002

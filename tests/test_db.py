@@ -1,7 +1,7 @@
 """Tests for src.db — SQLite schema and operations."""
 
 import unittest
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 from src.adapters import FetchedItem
 from src.db import (
@@ -64,6 +64,17 @@ class TestInsertContent(unittest.TestCase):
         count = self.conn.execute("SELECT COUNT(*) FROM content").fetchone()[0]
         self.assertEqual(count, 1)
 
+    def test_insert_content_normalizes_published_at_to_utc(self):
+        item = _make_item(
+            source_id="offset_item",
+            published_at=datetime(2026, 3, 1, 0, 30, tzinfo=timezone(timedelta(hours=-5))),
+        )
+
+        insert_content(self.conn, item, "/data/offset_item.txt")
+
+        row = self.conn.execute("SELECT published_at FROM content WHERE id = ?", ("offset_item",)).fetchone()
+        self.assertEqual("2026-03-01T05:30:00+00:00", row["published_at"])
+
 
 class TestContentExists(unittest.TestCase):
     def setUp(self):
@@ -118,6 +129,24 @@ class TestGetContentByTopic(unittest.TestCase):
     def test_get_content_by_topic_no_filter(self):
         rows = get_content_by_topic(self.conn, "tech")
         self.assertEqual(len(rows), 2)
+
+    def test_get_content_by_topic_since_filter_normalizes_timezones(self):
+        insert_content(
+            self.conn,
+            _make_item(
+                "offset",
+                published_at=datetime(2026, 3, 1, 0, 30, tzinfo=timezone(timedelta(hours=-5))),
+            ),
+            "/data/offset.txt",
+        )
+        link_content_topic(self.conn, "offset", "tech")
+
+        rows = get_content_by_topic(
+            self.conn,
+            "tech",
+            since=datetime(2026, 3, 1, 4, 0, tzinfo=timezone.utc),
+        )
+        self.assertEqual({"offset"}, {row["id"] for row in rows})
 
 
 class TestInsertDigest(unittest.TestCase):

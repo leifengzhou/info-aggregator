@@ -214,7 +214,7 @@ def parse_since(value: str) -> datetime:
     parsed = datetime.fromisoformat(candidate)
     if parsed.tzinfo is None:
         return parsed.replace(tzinfo=timezone.utc)
-    return parsed
+    return parsed.astimezone(timezone.utc)
 
 
 def _select_topics(config: AppConfig, topic: str | None) -> list:

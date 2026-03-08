@@ -48,6 +48,10 @@ class TestParseSince(unittest.TestCase):
         parsed = parse_since("2026-03-08T15:30:00")
         self.assertEqual(timezone.utc, parsed.tzinfo)
 
+    def test_parse_since_normalizes_offset_datetime_to_utc(self) -> None:
+        parsed = parse_since("2026-03-08T15:30:00-05:00")
+        self.assertEqual(datetime(2026, 3, 8, 20, 30, tzinfo=timezone.utc), parsed)
+
 
 class TestRunFetch(unittest.TestCase):
     def test_run_fetch_processes_all_topics_and_skips_non_youtube_sources(self) -> None:
