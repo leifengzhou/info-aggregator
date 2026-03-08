@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +24,7 @@ class TopicConfig:
     relevance_threshold: float
     schedule: str
     digest: str
+    fetch_since: datetime | None
     sources: dict[str, list[dict[str, Any]]]
 
 
@@ -86,6 +88,7 @@ def _parse_topic(slug: str, raw_topic: Any, path: str) -> TopicConfig:
     description = _require_non_empty_string(topic, "description", path)
     schedule = _require_non_empty_string(topic, "schedule", path)
     digest = _require_non_empty_string(topic, "digest", path)
+    fetch_since = _parse_optional_since(topic.get("fetch_since"), f"{path}.fetch_since")
     _validate_schedule(schedule, path)
 
     if digest not in VALID_DIGEST_FREQUENCIES:
@@ -134,8 +137,29 @@ def _parse_topic(slug: str, raw_topic: Any, path: str) -> TopicConfig:
         relevance_threshold=float(threshold),
         schedule=schedule,
         digest=digest,
+        fetch_since=fetch_since,
         sources=validated_sources,
     )
+
+
+def _parse_optional_since(value: Any, path: str) -> datetime | None:
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value.strip():
+        raise ConfigError(f"{path} must be a non-empty ISO date/datetime string")
+
+    candidate = value.strip()
+    try:
+        if len(candidate) == 10:
+            return datetime.fromisoformat(candidate).replace(tzinfo=timezone.utc)
+
+        parsed = datetime.fromisoformat(candidate)
+    except ValueError as exc:
+        raise ConfigError(f"{path} must be a valid ISO date/datetime string") from exc
+
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
 
 
 def _validate_source_entry(
@@ -144,8 +168,13 @@ def _validate_source_entry(
     if source_type == "youtube":
         channel_id = entry.get("channel_id")
         playlist_url = entry.get("playlist_url")
-        if not _is_non_empty_string(channel_id) and not _is_non_empty_string(playlist_url):
-            raise ConfigError(f"{path} must include a non-empty channel_id or playlist_url")
+        channel_handle = entry.get("channel_handle")
+        if (not _is_non_empty_string(channel_id)
+                and not _is_non_empty_string(playlist_url)
+                and not _is_non_empty_string(channel_handle)):
+            raise ConfigError(
+                f"{path} must include a non-empty channel_id, playlist_url, or channel_handle"
+            )
 
     elif source_type == "reddit":
         _require_entry_string(entry, "subreddit", path)

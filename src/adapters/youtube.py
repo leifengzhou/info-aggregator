@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import logging
 import re
+import subprocess
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -16,7 +18,32 @@ from xml.etree import ElementTree
 
 from src.adapters import BaseAdapter, FetchedItem
 from src.db import insert_content, link_content_topic
-from src.transcript import TranscriptError, TranscriptResult, fetch_transcript
+from src.transcript import (
+    TranscriptError,
+    TranscriptResult,
+    fetch_transcript,
+    transcript_to_text,
+)
+
+def resolve_channel_handle(handle: str) -> str:
+    """Resolve a YouTube @handle to a channel_id via yt-dlp.
+
+    Raises ValueError if yt-dlp returns a non-zero exit code or empty output.
+    """
+    url = f"https://www.youtube.com/@{handle.lstrip('@')}"
+    result = subprocess.run(
+        ["yt-dlp", "--print", "channel_id", "--playlist-end", "1", url],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    channel_id = result.stdout.strip()
+    if result.returncode != 0 or not channel_id:
+        raise ValueError(
+            f"yt-dlp failed to resolve handle '{handle}': {result.stderr.strip()}"
+        )
+    return channel_id
+
 
 _ATOM_NAMESPACE = {
     "atom": "http://www.w3.org/2005/Atom",
@@ -43,13 +70,36 @@ class YouTubeAdapter(BaseAdapter):
         self,
         feed_fetcher: Callable[[str], str] | None = None,
         transcript_fetcher: Callable[[str], TranscriptResult] | None = None,
+        transcript_delay_seconds: float = 1.0,
+        sleep_func: Callable[[float], None] | None = None,
+        channel_id_resolver: Callable[[str], str] | None = None,
     ) -> None:
         self._feed_fetcher = feed_fetcher or _fetch_feed
         self._transcript_fetcher = transcript_fetcher or fetch_transcript
+        self._transcript_delay_seconds = transcript_delay_seconds
+        self._sleep = sleep_func or time.sleep
+        self._channel_id_resolver = channel_id_resolver or resolve_channel_handle
 
     def fetch(
         self, source_config: dict, since: datetime | None = None
     ) -> list[FetchedItem]:
+        # Resolve handle → channel_id if needed
+        if not source_config.get("channel_id") and source_config.get("channel_handle"):
+            handle = source_config["channel_handle"]
+            try:
+                channel_id = self._channel_id_resolver(handle)
+                logger.info(
+                    "channel_handle_resolved",
+                    extra={"handle": handle, "channel_id": channel_id},
+                )
+            except (ValueError, subprocess.TimeoutExpired, FileNotFoundError) as exc:
+                logger.warning(
+                    "channel_handle_resolution_failed",
+                    extra={"handle": handle, "error": str(exc)},
+                )
+                return []
+            source_config = {**source_config, "channel_id": channel_id}
+
         feed_url, locator_metadata = _build_feed_url(source_config)
         logger.info(
             "youtube_fetch_started",
@@ -63,11 +113,20 @@ class YouTubeAdapter(BaseAdapter):
             return []
 
         items: list[FetchedItem] = []
-        for video in discovered_videos:
+        for index, video in enumerate(discovered_videos):
+            if index > 0 and self._transcript_delay_seconds > 0:
+                logger.debug(
+                    "youtube_transcript_throttled",
+                    extra={
+                        "video_id": video.video_id,
+                        "delay_seconds": self._transcript_delay_seconds,
+                    },
+                )
+                self._sleep(self._transcript_delay_seconds)
             try:
                 result = self._transcript_fetcher(video.video_id)
                 transcript_segments = result.segments
-                transcript_text = "\n".join(s.text for s in transcript_segments)
+                transcript_text = transcript_to_text(transcript_segments)
                 transcript_available = True
                 is_generated = result.is_generated
                 transcript_language = result.language_code
@@ -129,6 +188,7 @@ def ingest_youtube_source(
     source_config: dict,
     content_root: str | Path,
     since: datetime | None = None,
+    transcript_delay_seconds: float = 1.0,
     adapter: YouTubeAdapter | None = None,
 ) -> YouTubeIngestResult:
     """Fetch, persist, and link YouTube items for a single topic/source."""
@@ -137,7 +197,7 @@ def ingest_youtube_source(
         "youtube_ingest_started",
         extra={"topic": topic, "since": since.isoformat() if since else None},
     )
-    active_adapter = adapter or YouTubeAdapter()
+    active_adapter = adapter or YouTubeAdapter(transcript_delay_seconds=transcript_delay_seconds)
     items = active_adapter.fetch(source_config, since=since)
     output_dir = Path(content_root)
     output_dir.mkdir(parents=True, exist_ok=True)
