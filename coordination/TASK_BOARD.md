@@ -22,7 +22,7 @@
 | P1-008 | Logging setup | senior-dev | done | P1-001 | Structured logging (file + console); configurable log level; all adapters and DB ops log key events |
 | P1-009 | QA smoke plan for Phase 1 | senior-qa | done | P1-007 | Smoke checks mapped to US-001 through US-004 acceptance criteria |
 | P1-CLEANUP-001 | Remove stale files from workspace | senior-dev | in_review | - | `coordination/.venv/`, `test_p1.db*` removed; no untracked junk in repo |
-| P1-CLEANUP-002 | Fix broken channel ID in default config | senior-dev | todo | - | All channel_ids in `config/topics.yaml` return valid RSS feeds |
+| P1-CLEANUP-002 | Fix broken channel ID in default config | senior-dev | in_review | - | All channel_ids in `config/topics.yaml` return valid RSS feeds |
 | P1-REF-001 | Simplify FetchSummary accumulation in main.py | senior-dev | todo | - | FetchSummary no longer rebuilt from scratch each iteration; mutable counters or equivalent |
 | P1-REF-002 | Remove redundant content_exists check in YouTube adapter | senior-dev | todo | - | `ingest_youtube_source` uses `insert_content` return value for dedup instead of separate query; test_youtube_adapter still passes |
 | P1-REF-003 | Add `__main__.py` for `src` package | senior-dev | todo | - | `python -m src fetch` works as equivalent to `python -m src.main fetch` |
