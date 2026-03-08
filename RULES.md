@@ -175,3 +175,4 @@ Optional body with context if the "why" isn't obvious.
 - Do not change DB schema without architect review
 - Follow existing project layout from `TECH_SPEC.md`
 - Keep adapters contract-compliant with the interface in `src/adapters/__init__.py`
+- Prefer config file over CLI for persistent application settings. CLI flags are reserved for one-off overrides and bootstrap args (`--config`, `--topic`).

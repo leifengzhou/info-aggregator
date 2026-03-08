@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -24,13 +25,22 @@ class TopicConfig:
     schedule: str
     digest: str
     sources: dict[str, list[dict[str, Any]]]
+    fetch_since: datetime | None = None
 
 
 @dataclass(frozen=True)
 class AppConfig:
     """Top-level application configuration."""
 
+    settings: "AppSettings"
     topics: dict[str, TopicConfig]
+
+
+@dataclass(frozen=True)
+class AppSettings:
+    """Validated global application settings."""
+
+    youtube_transcript_delay_seconds: float = 1.0
 
 
 VALID_DIGEST_FREQUENCIES = {"daily", "weekly", "on-demand"}
@@ -60,6 +70,7 @@ def parse_config(raw_config: Any) -> AppConfig:
     """Validate already-parsed config data."""
 
     config = _expect_mapping(raw_config, "config")
+    settings = _parse_settings(config.get("settings"))
     raw_topics = config.get("topics")
     if raw_topics is None:
         raise ConfigError("config.topics is required")
@@ -77,7 +88,21 @@ def parse_config(raw_config: Any) -> AppConfig:
         topic = _parse_topic(slug, raw_topic, topic_path)
         topics[slug] = topic
 
-    return AppConfig(topics=topics)
+    return AppConfig(settings=settings, topics=topics)
+
+
+def _parse_settings(raw_settings: Any) -> AppSettings:
+    if raw_settings is None:
+        return AppSettings()
+
+    settings = _expect_mapping(raw_settings, "config.settings")
+    delay_seconds = settings.get("youtube_transcript_delay_seconds", 1.0)
+    if not isinstance(delay_seconds, (int, float)) or isinstance(delay_seconds, bool):
+        raise ConfigError("config.settings.youtube_transcript_delay_seconds must be a number >= 0")
+    if delay_seconds < 0:
+        raise ConfigError("config.settings.youtube_transcript_delay_seconds must be >= 0")
+
+    return AppSettings(youtube_transcript_delay_seconds=float(delay_seconds))
 
 
 def _parse_topic(slug: str, raw_topic: Any, path: str) -> TopicConfig:
@@ -127,6 +152,9 @@ def _parse_topic(slug: str, raw_topic: Any, path: str) -> TopicConfig:
 
         validated_sources[source_type] = validated_entries
 
+    raw_since = topic.get("fetch_since")
+    fetch_since = _parse_fetch_since(raw_since, path) if raw_since is not None else None
+
     return TopicConfig(
         slug=slug,
         name=name,
@@ -135,7 +163,23 @@ def _parse_topic(slug: str, raw_topic: Any, path: str) -> TopicConfig:
         schedule=schedule,
         digest=digest,
         sources=validated_sources,
+        fetch_since=fetch_since,
     )
+
+
+def _parse_fetch_since(value: Any, path: str) -> datetime:
+    if not isinstance(value, str):
+        raise ConfigError(f"{path}.fetch_since must be a string (ISO 8601 date or datetime)")
+    candidate = value.strip()
+    try:
+        if len(candidate) == 10:
+            return datetime.fromisoformat(candidate).replace(tzinfo=timezone.utc)
+        parsed = datetime.fromisoformat(candidate)
+        if parsed.tzinfo is None:
+            return parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+    except ValueError as exc:
+        raise ConfigError(f"{path}.fetch_since: invalid date/datetime '{candidate}'") from exc
 
 
 def _validate_source_entry(

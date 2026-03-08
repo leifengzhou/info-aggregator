@@ -30,6 +30,22 @@
 | P1-BUG-002 | Timezone inconsistency in --since filtering | senior-dev | done | - | `published_at` values stored with consistent timezone handling; `--since` filter works correctly regardless of source timezone |
 | P1-REF-005 | Surface transcript generation type metadata | architect | done | - | `fetch_transcript()` returns `TranscriptResult` with `is_generated`, `language`, `language_code`; adapter surfaces in metadata; db.py log levels demoted |
 | P1-REF-006 | Human-readable artifact file naming | architect | done | P1-REF-005 | Artifacts named `{channel}_{title}__{id}.json`; truncated to 200 chars; video ID guarantees uniqueness |
+| P1-BUG-004 | Rate limiting for YouTube transcript fetches | senior-dev | done | - | Config `settings.youtube_transcript_delay_seconds` drives delay between transcript calls; default 1.0s; existing tests unaffected |
+
+| P1-REF-007 | Wire `transcript_to_text()` into YouTube adapter | senior-dev | done | - | Adapter uses `transcript_to_text` from formatters; inline join removed; all tests pass |
+
+| P1-CLEANUP-003 | Remove `content_exists` dead code | senior-dev | done | - | Function and its test removed; no remaining references; suite passes |
+
+| P1-REF-008 | Tests + DECISIONS.md for `playlist_url` | senior-dev | done | - | `_build_feed_url` and `_extract_playlist_id` fully tested for both paths and error cases; DEC-005 logged |
+
+| P2-FUTURE-001 | Non-ASCII slug handling in artifact filenames | senior-dev | todo | - | `_slugify` handles non-ASCII input gracefully (transliterate or fallback token); test coverage |
+| P1-BUG-005 | Per-run log file naming | senior-dev | done | - | Each `fetch` run writes to `info-aggregator_{timestamp}.log`; `--log-file` override still works |
+| P1-REF-009 | Add `run_id` to fetch log events | senior-dev | done | P1-BUG-005 | `fetch_run_started` and `fetch_run_completed` include `run_id`; value matches log filename timestamp |
+| P1-BUG-006 | Warn on transcript language fallback | senior-dev | done | - | WARNING logged when `fetch_transcript()` falls back from requested language to alternate language |
+| P2-FUTURE-002 | Sanitize source_config from log events | senior-dev | todo | - | Log only known-safe fields from source_config, not the full dict |
+| P2-FUTURE-003 | Document log retention strategy | architect | todo | - | Add retention note and example rotation guidance to project docs |
+| P2-FUTURE-004 | Analysis pipeline: filter transcript_available=False | senior-dev | todo | - | Analysis pipeline skips items where artifact metadata.transcript_available is false |
+| P1-010 | fetch_since per-topic config field | senior-dev | todo | - | topic.fetch_since parsed from YAML and used as default since; CLI --since overrides for that run |
 
 ## User Story -> Task Mapping
 - **US-001** (config): P1-001, P1-002
@@ -193,3 +209,75 @@ Filled by QA at sign-off (task moves to `done`). Git history tracks the code; th
 - Files touched: src/db.py, src/main.py
 - Tests run: Full suite.
 - Notes: Timezone filtering tested and working smoothly.
+
+### P1-REF-005: Surface transcript generation type metadata
+- Completed: 2026-03-08
+- Owner: architect
+- Commit: pending
+- Files touched: src/transcript/extractor.py, src/adapters/youtube.py
+- Tests run: `pytest tests/test_transcript.py tests/test_youtube_adapter.py`
+- Notes: TranscriptResult now includes metadata, surfaced in YouTube adapter.
+
+### P1-REF-006: Human-readable artifact file naming
+- Completed: 2026-03-08
+- Owner: architect
+- Commit: pending
+- Files touched: src/adapters/youtube.py
+- Tests run: `pytest tests/test_youtube_adapter.py`
+- Notes: Artifacts now named with channel, title, and ID. Truncation verified.
+
+### P1-BUG-004: Rate limiting for YouTube transcript fetches
+- Completed: 2026-03-08
+- Owner: senior-dev
+- Commit: pending
+- Files touched: src/adapters/youtube.py, tests/test_youtube_adapter.py
+- Tests run: `pytest tests/test_youtube_adapter.py`
+- Notes: Throttling between transcript calls implemented and verified with mock sleep.
+
+### P1-REF-007: Wire `transcript_to_text()` into YouTube adapter
+- Completed: 2026-03-08
+- Owner: senior-dev
+- Commit: pending
+- Files touched: src/adapters/youtube.py
+- Tests run: `pytest tests/test_youtube_adapter.py`
+- Notes: Refactored YouTube adapter to use shared transcript formatter.
+
+### P1-CLEANUP-003: Remove `content_exists` dead code
+- Completed: 2026-03-08
+- Owner: senior-dev
+- Commit: pending
+- Files touched: src/db.py, tests/test_db.py
+- Tests run: `pytest tests/test_db.py`
+- Notes: Redundant content_exists removed after P1-REF-002 refactor.
+
+### P1-REF-008: Tests + DECISIONS.md for `playlist_url`
+- Completed: 2026-03-08
+- Owner: senior-dev
+- Commit: pending
+- Files touched: tests/test_youtube_adapter.py, coordination/DECISIONS.md
+- Tests run: `pytest tests/test_youtube_adapter.py`
+- Notes: Covered YouTube feed locator logic for both channel_id and playlist_url.
+
+### P1-BUG-005: Per-run log file naming
+- Completed: 2026-03-08
+- Owner: senior-dev
+- Commit: pending
+- Files touched: src/main.py, tests/test_main.py
+- Tests run: `pytest tests/test_main.py`
+- Notes: Automatic log file generation tested.
+
+### P1-REF-009: Add `run_id` to fetch log events
+- Completed: 2026-03-08
+- Owner: senior-dev
+- Commit: pending
+- Files touched: src/main.py, tests/test_main.py
+- Tests run: `pytest tests/test_main.py`
+- Notes: run_id correctly propagated to fetch start/end events.
+
+### P1-BUG-006: Warn on transcript language fallback
+- Completed: 2026-03-08
+- Owner: senior-dev
+- Commit: pending
+- Files touched: src/transcript/extractor.py, tests/test_transcript.py
+- Tests run: `pytest tests/test_transcript.py`
+- Notes: Warning logic correctly triggers on fallback.

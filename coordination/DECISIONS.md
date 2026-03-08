@@ -50,3 +50,23 @@ Use one entry per decision.
 - Decision: Introduce a `TranscriptResult` dataclass wrapping segments + metadata. `fetch_transcript()` returns `TranscriptResult` instead of a bare list. YouTube adapter surfaces `transcript_is_generated` and `transcript_language` in item metadata.
 - Consequences: Breaking change to `fetch_transcript()` return type — all callers updated. Enables downstream consumers (digests, UI) to distinguish manual vs auto-generated transcripts.
 - Owner: architect
+
+---
+
+### DEC-005: Accept playlist_url as an unofficial YouTube locator
+- Date: 2026-03-08
+- Status: accepted
+- Context: Dev implemented playlist_url support alongside channel_id in the YouTube adapter, but it was not in the TECH_SPEC. playlist_url allows subscribing to a specific YouTube playlist rather than an entire channel.
+- Decision: Accept as an official extension. Add tests. Update DECISIONS.md.
+- Consequences: Slightly wider config surface than spec; no migration required.
+- Owner: architect
+
+---
+
+### DEC-006: Config file over CLI for persistent settings
+- Date: 2026-03-08
+- Status: accepted
+- Context: As settings accumulated on the CLI (--log-level, --since, --db, etc.), the fetch command became harder to use and settings were not persisted across runs.
+- Decision: Persistent settings belong in config/topics.yaml under `settings:` or as per-topic fields. CLI flags are reserved for: bootstrap paths (--config), ad-hoc one-off overrides (--since, --topic), and automation/testing hooks (--db, --log-file). New settings default to config; a CLI flag is added only when an override use case exists.
+- Consequences: Config becomes the authoritative source of run behavior; CLI stays minimal.
+- Owner: architect
