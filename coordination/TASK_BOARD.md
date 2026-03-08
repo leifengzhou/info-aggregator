@@ -17,7 +17,7 @@
 | P1-004 | Adapter base interface contract | architect | done | P1-001 | FetchedItem dataclass + BaseAdapter ABC in src/adapters/ |
 | P1-005 | Migrate transcript library | senior-dev | done | P1-004 | Importable fetch_transcript(); formatter tests pass |
 | P1-006 | YouTube adapter | senior-dev | done | P1-003, P1-004, P1-005 | Discovers videos via RSS, fetches transcripts, stores to DB+filesystem, dedup works |
-| P1-007 | CLI fetch command (--topic, --since) | senior-dev | in_review | P1-002, P1-003, P1-006 | `fetch` runs all topics; `--topic` filters; `--since` sets start date |
+| P1-007 | CLI fetch command (--topic, --since) | senior-dev | done | P1-002, P1-003, P1-006 | `fetch` runs all topics; `--topic` filters; `--since` sets start date |
 | P1-008 | Logging setup | senior-dev | todo | P1-001 | Structured logging (file + console); configurable log level; all adapters and DB ops log key events |
 | P1-009 | QA smoke plan for Phase 1 | senior-qa | todo | P1-007 | Smoke checks mapped to US-001 through US-004 acceptance criteria |
 
@@ -95,3 +95,11 @@ Filled by QA at sign-off (task moves to `done`). Git history tracks the code; th
 - Files touched: src/adapters/youtube.py, tests/test_youtube_adapter.py, coordination/
 - Tests run: unit tests, manual live integration check with Google Developers channel to verify discovery, db insertion, and topic deduplication.
 - Notes: Acceptance criteria met. Live fetching successfully pulls and parses feeds, creates db entries, links topics, and skips duplicate inserts on re-runs.
+
+### P1-007: CLI fetch command (--topic, --since)
+- Completed: 2026-03-08
+- Owner: senior-dev
+- Commit: a6fc940
+- Files touched: src/main.py, tests/test_main.py, coordination/
+- Tests run: unit tests, CLI smoke test against default config with no args, with `--topic` filter, and with `--since` filter.
+- Notes: Acceptance criteria met. CLI correctly routes the args, outputs processing summary, and ignores non-YouTube sources as intended for this phase. Logged an issue for the default config having a 404 channel ID.
