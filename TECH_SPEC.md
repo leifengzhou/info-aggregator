@@ -102,6 +102,15 @@ This document contains all implementation details for the Info Aggregator. For p
 
 ## Config Format
 
+The `settings:` block at the top level of `topics.yaml` controls global runtime behaviour. All settings have defaults and are optional.
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `youtube_transcript_delay_seconds` | float | `1.0` | Delay between transcript API calls per channel |
+| `youtube_transcript_max_retries` | int | `3` | Retries on HTTP 429 from transcript backend |
+| `youtube_cookies_file` | string\|null | `null` | Path to cookies.txt for YouTube auth fallback |
+| `reddit_request_delay_seconds` | float | `1.0` | Delay between per-post comment-fetch requests |
+
 ```yaml
 # config/topics.yaml
 
@@ -121,8 +130,10 @@ topics:
         - channel_id: "UCsJAl5x2J97OVJ4AO8QyPMA"   # Andrew Ng
       reddit:
         - subreddit: "MachineLearning"
-          sort: "hot"
-          limit: 25
+          sort: "hot"          # hot | new (default: new)
+          limit: 25            # 1-100 (default: 25)
+          comment_limit: 5     # top-level comments per post (default: 0 = disabled)
+          min_score: 10        # skip posts below this upvote count (optional)
         - subreddit: "LocalLLaMA"
           sort: "hot"
           limit: 25
@@ -213,6 +224,88 @@ CREATE INDEX idx_content_topics_score ON content_topics(relevance_score);
 ```
 
 **Note:** The original schema had a `topic` column on the `content` table and a `relevance_score` on both `content` and `content_topics`. This spec removes the redundant `topic` and `relevance_score` from `content` — the `content_topics` table is the authoritative source for topic membership and per-topic relevance scores. Content is topic-independent; its relationship to topics is managed entirely through `content_topics`.
+
+## Reddit Adapter
+
+### API Approach
+
+Uses Reddit's public JSON API — no PRAW, no OAuth required.
+
+- **Posts**: `GET https://www.reddit.com/r/{subreddit}/{sort}.json?limit={n}&raw_json=1`
+- **Comments**: `GET https://www.reddit.com/r/{subreddit}/comments/{post_id}.json?limit={n}&raw_json=1`
+- **User-Agent**: `python:info-aggregator:v0.1 (personal use)` — required by Reddit's API policy
+- **Rate limit**: ~10 req/min unauthenticated; `settings.reddit_request_delay_seconds` (default 1.0s) applies between comment-fetch requests
+- **Pagination**: `after=t3_{id}` param; max 100 posts per request; ~1,000 post ceiling per subreddit
+- **Date filtering**: No native date param — filter by `created_utc` in code after fetch
+- **`more` comment objects**: Skipped entirely in Phase 2 (nested reply expansion deferred)
+
+### FetchedItem Mapping
+
+| FetchedItem field | Value |
+|-------------------|-------|
+| `source_id` | `"reddit_{post_id}"` — e.g. `"reddit_1abc23"` |
+| `source_type` | `"reddit"` |
+| `url` | `https://www.reddit.com{permalink}` |
+| `title` | post title |
+| `author` | username string, or `None` if deleted |
+| `published_at` | `datetime.utcfromtimestamp(created_utc).replace(tzinfo=UTC)` |
+| `content` | post body (selftext for self-posts; URL for link posts) + formatted comments if fetched |
+| `metadata` | see below |
+
+### metadata dict
+
+```python
+{
+    "subreddit": "MachineLearning",
+    "score": 1234,
+    "upvote_ratio": 0.95,
+    "num_comments": 87,
+    "flair": "Research",          # or None
+    "is_self": True,              # True = text post, False = link post
+    "post_type": "self",          # "self" or "link"
+    "comments": [                 # empty list when comment_limit == 0
+        {"id": "abc", "author": "user", "body": "...", "score": 42},
+        ...
+    ]
+}
+```
+
+### content field format
+
+For self-posts:
+```
+{selftext}
+
+---
+Top Comments (5):
+1. [user, score: 42] comment body...
+2. [user2, score: 31] another comment...
+```
+
+For link posts (no selftext): content = the external URL, followed by comments section if fetched.
+
+### Artifact file naming
+
+`reddit_{subreddit}_{slug(title)}__{post_id}.json` — same slugify pattern as the YouTube adapter (lowercase alphanumeric + hyphens), 200 char cap before `.json`.
+
+### Error handling
+
+| Condition | Behaviour |
+|-----------|-----------|
+| Subreddit not found / private / banned (404/403) | log WARNING, return `[]` |
+| Network error | log WARNING, return `[]` |
+| Comment fetch failure for one post | log WARNING, skip comments for that post only — do not abort the run |
+| HTTP 429 rate limit | respect `Retry-After` header if present; otherwise back off 60s and retry once |
+
+### Config fields (per-source)
+
+| Field | Type | Required | Default | Constraint |
+|-------|------|----------|---------|------------|
+| `subreddit` | string | yes | — | non-empty string |
+| `sort` | string | no | `new` | `hot` or `new` |
+| `limit` | int | no | `25` | 1–100 |
+| `comment_limit` | int | no | `0` | ≥ 0 (0 = disabled) |
+| `min_score` | int | no | none | ≥ 0 when provided |
 
 ## Adapter Interface Contract
 

@@ -83,6 +83,21 @@ Use one entry per decision.
 
 ---
 
+### DEC-009: Reddit adapter design (Phase 2)
+- Date: 2026-03-10
+- Status: accepted
+- Context: Phase 2 adds Reddit as the first non-YouTube source. Several design choices needed logging before dev starts implementation.
+- Decision (5 sub-decisions):
+  1. **No PRAW** — public JSON API (append `.json` to any subreddit URL) avoids auth dependency and OAuth registration. ~10 req/min unauthenticated is sufficient for personal use.
+  2. **Top-level comments only in Phase 2** — nested reply expansion (`more` objects) deferred to Phase 3. Keeps the adapter simple; the common case (top N comments) is fully covered.
+  3. **`source_id` prefix** — use `reddit_{post_id}` (e.g. `reddit_1abc23`) rather than the bare post ID to avoid theoretical collision with other source types that use numeric IDs.
+  4. **`since` as a post-filter, not a URL param** — Reddit has no native date filter on its public JSON API. All sorts fetch up to `limit` posts, then filter by `created_utc >= since` in code. For `hot` sort with a tight `since` window this may return fewer than `limit` results — expected and documented behaviour.
+  5. **`comment_limit` defaults to 0** — comment fetching is opt-in. Each post requires one extra HTTP request; defaulting to disabled keeps the common case fast and respects rate limits.
+- Consequences: Config gains two new optional per-source fields (`comment_limit`, `min_score`) and one new global setting (`reddit_request_delay_seconds`). No schema changes. No interface changes to `FetchedItem` or `BaseAdapter`.
+- Owner: architect
+
+---
+
 ### DEC-008: Use yt-dlp Python API as the transcript backend
 - Date: 2026-03-08
 - Status: accepted

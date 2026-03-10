@@ -1,0 +1,72 @@
+settings:
+  youtube_transcript_delay_seconds: 1.0   # delay between transcript API calls per channel (seconds); 0 disables
+  youtube_transcript_max_retries: 3       # retries on HTTP 429 from transcript backend
+  youtube_cookies_file: null              # optional path to cookies.txt for YouTube auth
+  reddit_request_delay_seconds: 1.0      # delay between per-post comment-fetch requests (seconds)
+
+topics:
+  ai-research:
+    name: "AI Research & News"
+    description: >
+      Latest developments in artificial intelligence, machine learning,
+      LLMs, foundational models, AI safety, and AI product launches.
+      Focus on technical breakthroughs, new model releases, and industry shifts.
+    relevance_threshold: 6
+    schedule: "0 */4 * * *"
+    digest: daily
+    fetch_since: "2026-03-01"
+    sources:
+      youtube:
+        - channel_id: "UCXgGY0wkgOzynnHvSEVmE3A"
+        - channel_id: "UCcIXc5mJsHVYTZR1maL5l9w"
+      reddit:
+        - subreddit: "MachineLearning"
+          sort: "hot"          # hot | new (default: new)
+          limit: 25            # 1-100 posts per fetch (default: 25)
+          comment_limit: 5     # top-level comments per post; 0 = disabled (default)
+          min_score: 10        # skip posts below this upvote count (optional)
+        - subreddit: "LocalLLaMA"
+          sort: "hot"
+          limit: 25
+      rss:
+        - url: "https://arxiv.org/rss/cs.AI"
+        - url: "https://news.ycombinator.com/rss"
+
+  itad-market:
+    name: "ITAD Market Intelligence"
+    description: >
+      IT Asset Disposition industry news: pricing trends for used servers,
+      networking equipment, enterprise storage. E-waste regulation,
+      data destruction standards, major ITAD company moves.
+    relevance_threshold: 5
+    schedule: "0 9 * * *"
+    digest: weekly
+    sources:
+      reddit:
+        - subreddit: "homelab"
+          sort: "hot"
+          limit: 15
+        - subreddit: "sysadmin"
+          sort: "hot"
+          limit: 15
+      rss:
+        - url: "https://www.e-scrap.com/feed/"
+
+  politics-us:
+    name: "US Politics"
+    description: >
+      Major US political developments, legislation, executive orders,
+      Supreme Court decisions, and election-related news.
+    relevance_threshold: 7
+    schedule: "0 */6 * * *"
+    digest: daily
+    sources:
+      reddit:
+        - subreddit: "politics"
+          sort: "hot"
+          limit: 20
+        - subreddit: "neutralpolitics"
+          sort: "hot"
+          limit: 15
+      rss:
+        - url: "https://feeds.npr.org/1001/rss.xml"
