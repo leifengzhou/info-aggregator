@@ -37,9 +37,11 @@ Track all findings here. Rejected tasks should reference an issue ID.
 | Issue | Task | Severity | Status | Description |
 |-------|------|----------|--------|-------------|
 | ISSUE-001 | P1-007, P1-BUG-001 | low | fixed | `config/topics.yaml` has a YouTube channel (`UCsJAl5x2J97OVJ4AO8QyPMA`) that 404s, causing `fetch` to crash if unhandled. Adapter needs resilient 404 handling. |
+| ISSUE-002 | P1-012 | high | fixed | `fetch_transcript` crashes with unhandled `urllib.error.HTTPError: HTTP Error 429` when downloading subtitle payloads via `urllib.request.urlopen`. The retry logic only wraps the `yt-dlp` metadata extraction, not the raw text download. |
 
 **Severity**: critical | high | medium | low
 **Status**: open | fixed | wont-fix
+
 
 ## Findings Detail
 
@@ -55,6 +57,14 @@ Use this section for detailed repro steps when an issue needs more context.
 - Actual:
 - Affected files:
 ```
+
+### ISSUE-002
+- Task ID: P1-012
+- Severity: high
+- Repro steps: Run `python -m src fetch` against a channel with many videos (e.g. `@mkbhd`). Wait for multiple transcript payloads to be fetched sequentially.
+- Expected: Rate limits (429) from YouTube on the raw subtitle text URLs are caught, retried (using the configurable max_retries), and eventually gracefully handled if exhausted.
+- Actual: The script crashes with an unhandled `urllib.error.HTTPError: HTTP Error 429: Too Many Requests` traceback emanating from `_download_subtitle_content` in `src/transcript/extractor.py`.
+- Affected files: `src/transcript/extractor.py`
 
 ### ISSUE-001
 - Task ID: P1-007
@@ -90,3 +100,19 @@ Use this section for detailed repro steps when an issue needs more context.
 | P1-REF-003 | 2026-03-08 | pass | None | Verified `python3 -m src fetch --help` behaves equivalently to `src.main` |
 | P1-REF-004 | 2026-03-08 | pass | None | Verified explicit dev dependencies |
 | P1-BUG-002 | 2026-03-08 | pass | None | Verified timezone-aware logic via automated suite |
+| P1-REF-005 | 2026-03-08 | pass | None | Transcript metadata (language, is_generated) correctly surfaced and tested |
+| P1-REF-006 | 2026-03-08 | pass | Artifact filenames can be very long | Human-readable filenames implemented with slugification and truncation |
+| P1-BUG-004 | 2026-03-08 | pass | Network dependent | Rate limiting between transcript fetches implemented and tested via mocks |
+| P1-REF-007 | 2026-03-08 | pass | None | Adapter now uses transcript_to_text() formatter; verified multiline content tests |
+| P1-CLEANUP-003 | 2026-03-08 | pass | None | Removed content_exists() from db.py and its test from test_db.py |
+| P1-REF-008 | 2026-03-08 | pass | None | Comprehensive tests for playlist_url support and feed URL building; DEC-005 logged |
+| P1-BUG-005 | 2026-03-08 | pass | Concurrent same-second runs may collide | Verified per-run auto log files and explicit override |
+| P1-REF-009 | 2026-03-08 | pass | None | run_id correctly matches timestamp and is included in run events |
+| P1-BUG-006 | 2026-03-08 | pass | None | Fallback warning logged during transcript fetch |
+| P1-010 | 2026-03-08 | pass | None | topic.fetch_since parsed and applied as default; CLI --since overrides properly |
+| P1-011 | 2026-03-08 | pass | yt-dlp must be installed in PATH | Verified @handle resolution and appropriate warning when invalid |
+| P1-012 | 2026-03-08 | pass | External API limits apply | Verified via test suite that urlopen 429 errors are caught, retried, and gracefully handled (ISSUE-002 resolved). |
+| P1-REF-010 | 2026-03-09 | pass | None | Human-friendly console output, JSON file logs, and latest.log pointer verified via manual runs and automated tests. |
+| P2-002..P2-005 | 2026-03-10 | pass | API rate limits | Verified Reddit fetching, config parsing, 404 handling, and stats logging via automated tests and live run against /r/Python. |
+
+

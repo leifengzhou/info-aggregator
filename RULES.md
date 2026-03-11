@@ -32,6 +32,7 @@ The `coordination/` folder is the shared workspace for multi-agent collaboration
 |------|---------|
 | `PROJECT.md` | Project source of truth — objectives, non-negotiables, definition of done |
 | `TASK_BOARD.md` | Kanban-style task tracking — all agents read/write task status here |
+| `ARCHIVE.md` | Completed task log — append-only; one slim entry per completed task |
 | `DECISIONS.md` | Architecture Decision Records (ADR-lite) — log all design decisions |
 | `LESSONS.md` | Shared lessons learned — mistakes and patterns to avoid repeating |
 | `AGENT_ARCHITECT.md` | Architect's workspace — approved contracts, handoffs to dev |
@@ -44,6 +45,8 @@ The `coordination/` folder is the shared workspace for multi-agent collaboration
 - One owner per task at a time
 - Schema or interface disagreements go to `DECISIONS.md` before code changes
 - Handoff notes are mandatory when passing work between roles — write structured fields (risks, files, tests) in your `AGENT_*.md`, not just commit messages
+- Write completion log entries to `ARCHIVE.md`, not `TASK_BOARD.md`
+- Each `AGENT_*.md` keeps only the most recent active handoff block; when starting a new task, collapse the previous block into a history table row and drop the verbose block
 
 ## Session Start Checklist
 
@@ -98,7 +101,7 @@ Every agent MUST run this sequence at the start of each session:
 2. **Plan First**: Check `coordination/TASK_BOARD.md` for the next task; claim it before starting
 3. **Track Progress**: Update task status in `TASK_BOARD.md` as you go
 4. **Log Decisions**: Record design choices in `coordination/DECISIONS.md`
-5. **Handoff**: Write handoff notes in your `coordination/AGENT_*.md` workspace
+5. **Handoff**: Write handoff notes in your `coordination/AGENT_*.md` workspace; write the completion entry (date, commit, files, tests, one-line note) to `coordination/ARCHIVE.md`
 6. **Capture Lessons**: After any correction, add to `coordination/LESSONS.md`
 
 ## Task Lifecycle

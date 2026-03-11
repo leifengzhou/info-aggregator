@@ -7,24 +7,7 @@ venv/
 .pytest_cache/
 
 # Data (generated at runtime)
-data/*
-!data/.gitkeep
-!data/content/
-!data/content/.gitkeep
-!data/content/youtube/
-!data/content/youtube/.gitkeep
-!data/content/reddit/
-!data/content/reddit/.gitkeep
-!data/content/rss/
-!data/content/rss/.gitkeep
-!data/content/hackernews/
-!data/content/hackernews/.gitkeep
-!data/digests/
-!data/digests/.gitkeep
-!data/digests/ai-research/
-!data/digests/ai-research/.gitkeep
-!data/digests/market-trends/
-!data/digests/market-trends/.gitkeep
+data/
 
 # IDE
 .vscode/
@@ -36,6 +19,18 @@ data/*
 # Secrets
 .env
 .secrets/
+
+# Local runtime config
+config/topics.yaml
+config/test_handle_topics.yaml
+config/test_reddit_topics.yaml
+
+# Local scratch artifacts
+test_p1.db*
+test_p1_data/
+test_reddit.db*
+plan_temp.md
+
 
 # Claude Code local state
 .claude/

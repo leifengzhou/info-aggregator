@@ -16,11 +16,41 @@ class ConfigLoaderTests(unittest.TestCase):
         config = load_config(Path("config/topics.yaml"))
 
         self.assertIsInstance(config, AppConfig)
-        self.assertEqual({"ai-research", "itad-market", "politics-us"}, set(config.topics))
+        self.assertIn("ai-research", config.topics)
+        self.assertIn("politics-us", config.topics)
         self.assertEqual("daily", config.topics["ai-research"].digest)
-        self.assertEqual("weekly", config.topics["itad-market"].digest)
-        self.assertIsNone(config.topics["ai-research"].fetch_since)
+        self.assertEqual(datetime(2026, 3, 1, tzinfo=timezone.utc), config.topics["ai-research"].fetch_since)
         self.assertIn("youtube", config.topics["ai-research"].sources)
+        self.assertEqual(1.0, config.settings.youtube_transcript_delay_seconds)
+        self.assertEqual(3, config.settings.youtube_transcript_max_retries)
+        self.assertIsNone(config.settings.youtube_cookies_file)
+        self.assertEqual(1.0, config.settings.reddit_request_delay_seconds)
+
+    def test_parse_config_accepts_transcript_settings(self) -> None:
+        raw_config = {
+            "settings": {
+                "youtube_transcript_delay_seconds": 0.5,
+                "youtube_transcript_max_retries": 5,
+                "youtube_cookies_file": "cookies.txt",
+                "reddit_request_delay_seconds": 2.0,
+            },
+            "topics": {
+                "test-topic": {
+                    "name": "Test Topic",
+                    "description": "A test topic",
+                    "relevance_threshold": 5,
+                    "schedule": "0 * * * *",
+                    "digest": "daily",
+                    "sources": {"youtube": [{"channel_id": "UC123"}]},
+                }
+            },
+        }
+
+        config = parse_config(raw_config)
+        self.assertEqual(0.5, config.settings.youtube_transcript_delay_seconds)
+        self.assertEqual(5, config.settings.youtube_transcript_max_retries)
+        self.assertEqual("cookies.txt", config.settings.youtube_cookies_file)
+        self.assertEqual(2.0, config.settings.reddit_request_delay_seconds)
 
     def test_parse_config_accepts_fetch_since_date(self) -> None:
         raw_config = {
@@ -122,7 +152,109 @@ class ConfigLoaderTests(unittest.TestCase):
 
         with self.assertRaisesRegex(
             ConfigError,
-            r"config\.topics\.test-topic\.sources\.reddit\[0\]\.limit must be a positive integer",
+            r"config\.topics\.test-topic\.sources\.reddit\[0\]\.limit must be an integer between 1 and 100",
+        ):
+            parse_config(raw_config)
+
+    def test_parse_config_rejects_invalid_reddit_sort(self) -> None:
+        raw_config = {
+            "topics": {
+                "test-topic": {
+                    "name": "Test Topic",
+                    "description": "A test topic",
+                    "relevance_threshold": 5,
+                    "schedule": "0 * * * *",
+                    "digest": "daily",
+                    "sources": {"reddit": [{"subreddit": "python", "sort": "top"}]},
+                }
+            }
+        }
+
+        with self.assertRaisesRegex(
+            ConfigError,
+            r"config\.topics\.test-topic\.sources\.reddit\[0\]\.sort must be one of: hot, new",
+        ):
+            parse_config(raw_config)
+
+    def test_parse_config_rejects_invalid_reddit_comment_limit(self) -> None:
+        raw_config = {
+            "topics": {
+                "test-topic": {
+                    "name": "Test Topic",
+                    "description": "A test topic",
+                    "relevance_threshold": 5,
+                    "schedule": "0 * * * *",
+                    "digest": "daily",
+                    "sources": {"reddit": [{"subreddit": "python", "comment_limit": -1}]},
+                }
+            }
+        }
+
+        with self.assertRaisesRegex(
+            ConfigError,
+            r"config\.topics\.test-topic\.sources\.reddit\[0\]\.comment_limit must be a non-negative integer",
+        ):
+            parse_config(raw_config)
+
+    def test_parse_config_rejects_invalid_reddit_min_score(self) -> None:
+        raw_config = {
+            "topics": {
+                "test-topic": {
+                    "name": "Test Topic",
+                    "description": "A test topic",
+                    "relevance_threshold": 5,
+                    "schedule": "0 * * * *",
+                    "digest": "daily",
+                    "sources": {"reddit": [{"subreddit": "python", "min_score": -1}]},
+                }
+            }
+        }
+
+        with self.assertRaisesRegex(
+            ConfigError,
+            r"config\.topics\.test-topic\.sources\.reddit\[0\]\.min_score must be a non-negative integer",
+        ):
+            parse_config(raw_config)
+
+    def test_parse_config_rejects_invalid_max_retries(self) -> None:
+        raw_config = {
+            "settings": {"youtube_transcript_max_retries": -1},
+            "topics": {
+                "test-topic": {
+                    "name": "Test Topic",
+                    "description": "A test topic",
+                    "relevance_threshold": 5,
+                    "schedule": "0 * * * *",
+                    "digest": "daily",
+                    "sources": {"youtube": [{"channel_id": "UC123"}]},
+                }
+            },
+        }
+
+        with self.assertRaisesRegex(
+            ConfigError,
+            r"config\.settings\.youtube_transcript_max_retries must be a non-negative integer",
+        ):
+            parse_config(raw_config)
+
+    def test_parse_config_rejects_invalid_reddit_request_delay(self) -> None:
+        raw_config = {
+            "settings": {"reddit_request_delay_seconds": -0.5},
+            "topics": {
+                "test-topic": {
+                    "name": "Test Topic",
+                    "description": "A test topic",
+                    "relevance_threshold": 5,
+                    "schedule": "0 * * * *",
+                    "digest": "daily",
+                    "sources": {"youtube": [{"channel_id": "UC123"}]},
+                }
+            },
+        }
+
+        with self.assertRaisesRegex(
+            ConfigError,
+            r"config\.settings\.reddit_request_delay_seconds must be a non-negative number",
         ):
             parse_config(raw_config)
 

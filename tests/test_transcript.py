@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import unittest
-from types import SimpleNamespace
+from urllib.error import HTTPError
 from unittest.mock import patch
 
 from src.transcript import (
@@ -70,17 +70,28 @@ class FormatterTests(unittest.TestCase):
 
 
 class FetchTranscriptTests(unittest.TestCase):
-    @patch("src.transcript.extractor._build_api")
-    def test_fetch_transcript_returns_transcript_result(self, build_api_mock) -> None:
-        fake_api = build_api_mock.return_value
-        fake_api.fetch.return_value = SimpleNamespace(
-            snippets=[
-                SimpleNamespace(text="Hello", start=0.0, duration=1.2),
-                SimpleNamespace(text="World", start=1.2, duration=0.8),
-            ],
-            language="English",
-            language_code="en",
-            is_generated=False,
+    @patch("src.transcript.extractor._download_subtitle_content")
+    @patch("src.transcript.extractor._extract_info")
+    def test_fetch_transcript_returns_transcript_result(
+        self,
+        extract_info_mock,
+        download_mock,
+    ) -> None:
+        extract_info_mock.return_value = {
+            "subtitles": {
+                "en": [
+                    {"ext": "json3", "url": "https://example.com/en.json3", "name": "English"}
+                ]
+            },
+            "automatic_captions": {},
+        }
+        download_mock.return_value = json.dumps(
+            {
+                "events": [
+                    {"tStartMs": 0, "dDurationMs": 1200, "segs": [{"utf8": "Hello"}]},
+                    {"tStartMs": 1200, "dDurationMs": 800, "segs": [{"utf8": "World"}]},
+                ]
+            }
         )
 
         result = fetch_transcript("dQw4w9WgXcQ")
@@ -96,42 +107,129 @@ class FetchTranscriptTests(unittest.TestCase):
         self.assertEqual("English", result.language)
         self.assertEqual("en", result.language_code)
         self.assertFalse(result.is_generated)
-        fake_api.fetch.assert_called_once_with(
-            "dQw4w9WgXcQ", languages=["en"], preserve_formatting=False
+
+    @patch("src.transcript.extractor._download_subtitle_content")
+    @patch("src.transcript.extractor._extract_info")
+    def test_fetch_transcript_falls_back_to_any_language(
+        self,
+        extract_info_mock,
+        download_mock,
+    ) -> None:
+        extract_info_mock.return_value = {
+            "subtitles": {},
+            "automatic_captions": {
+                "es": [{"ext": "json3", "url": "https://example.com/es.json3", "name": "Spanish"}]
+            },
+        }
+        download_mock.return_value = json.dumps(
+            {"events": [{"tStartMs": 0, "dDurationMs": 1000, "segs": [{"utf8": "Hola"}]}]}
         )
 
-    @patch("src.transcript.extractor._build_api")
-    def test_fetch_transcript_falls_back_to_any_language(self, build_api_mock) -> None:
-        fake_api = build_api_mock.return_value
-        fake_api.fetch.side_effect = [
-            RuntimeError("missing requested language"),
-            SimpleNamespace(
-                snippets=[SimpleNamespace(text="Hola", start=0.0, duration=1.0)],
-                language="Spanish",
-                language_code="es",
-                is_generated=True,
-            ),
-        ]
-
-        result = fetch_transcript("dQw4w9WgXcQ", lang="en")
+        with self.assertLogs("src.transcript.extractor", level="WARNING") as logs:
+            result = fetch_transcript("dQw4w9WgXcQ", lang="en")
 
         self.assertEqual([TranscriptSegment(text="Hola", start=0.0, duration=1.0)], result.segments)
         self.assertTrue(result.is_generated)
         self.assertEqual("es", result.language_code)
-        self.assertEqual(2, fake_api.fetch.call_count)
-        self.assertEqual(
-            ("dQw4w9WgXcQ",),
-            fake_api.fetch.call_args_list[1].args,
-        )
-        self.assertEqual(
-            {"preserve_formatting": False},
-            fake_api.fetch.call_args_list[1].kwargs,
+        self.assertTrue(any("transcript_language_fallback" in message for message in logs.output))
+
+    @patch("src.transcript.extractor._extract_info")
+    def test_fetch_transcript_retries_on_429(self, extract_info_mock) -> None:
+        from yt_dlp.utils import DownloadError
+
+        calls: list[float] = []
+        extract_info_mock.side_effect = [
+            DownloadError("HTTP Error 429: Too Many Requests"),
+            {"subtitles": {"en": [{"ext": "vtt", "url": "https://example.com/en.vtt"}]}},
+        ]
+
+        with patch(
+            "src.transcript.extractor._download_subtitle_content",
+            return_value="WEBVTT\n\n00:00:00.000 --> 00:00:01.000\nHi\n",
+        ):
+            result = fetch_transcript(
+                "dQw4w9WgXcQ",
+                max_retries=2,
+                retry_delay_seconds=1.5,
+                _sleep_func=calls.append,
+                _random_func=lambda: 0.0,
+            )
+
+        self.assertEqual("en", result.language_code)
+        self.assertEqual([1.5], calls)
+        self.assertEqual(2, extract_info_mock.call_count)
+
+    @patch("src.transcript.extractor._extract_info")
+    def test_fetch_transcript_retries_when_subtitle_download_hits_429(self, extract_info_mock) -> None:
+        extract_info_mock.return_value = {
+            "subtitles": {"en": [{"ext": "vtt", "url": "https://example.com/en.vtt"}]},
+            "automatic_captions": {},
+        }
+        calls: list[float] = []
+        too_many_requests = HTTPError(
+            url="https://example.com/en.vtt",
+            code=429,
+            msg="Too Many Requests",
+            hdrs=None,
+            fp=None,
         )
 
-    @patch("src.transcript.extractor._build_api")
-    def test_fetch_transcript_raises_when_no_transcript_available(self, build_api_mock) -> None:
-        fake_api = build_api_mock.return_value
-        fake_api.fetch.side_effect = RuntimeError("no transcript")
+        with patch(
+            "src.transcript.extractor._download_subtitle_content",
+            side_effect=[
+                too_many_requests,
+                "WEBVTT\n\n00:00:00.000 --> 00:00:01.000\nHi\n",
+            ],
+        ) as download_mock:
+            result = fetch_transcript(
+                "dQw4w9WgXcQ",
+                max_retries=2,
+                retry_delay_seconds=1.5,
+                _sleep_func=calls.append,
+                _random_func=lambda: 0.0,
+            )
+
+        self.assertEqual("en", result.language_code)
+        self.assertEqual([TranscriptSegment(text="Hi", start=0.0, duration=1.0)], result.segments)
+        self.assertEqual([1.5], calls)
+        self.assertEqual(2, download_mock.call_count)
+
+    @patch("src.transcript.extractor._extract_info")
+    def test_fetch_transcript_raises_not_available_after_subtitle_download_429_retries(self, extract_info_mock) -> None:
+        extract_info_mock.return_value = {
+            "subtitles": {"en": [{"ext": "vtt", "url": "https://example.com/en.vtt"}]},
+            "automatic_captions": {},
+        }
+        too_many_requests = HTTPError(
+            url="https://example.com/en.vtt",
+            code=429,
+            msg="Too Many Requests",
+            hdrs=None,
+            fp=None,
+        )
+        calls: list[float] = []
+
+        with patch(
+            "src.transcript.extractor._download_subtitle_content",
+            side_effect=[too_many_requests, too_many_requests, too_many_requests],
+        ):
+            with self.assertRaisesRegex(
+                TranscriptNotAvailableError,
+                "No subtitles available for video dQw4w9WgXcQ",
+            ):
+                fetch_transcript(
+                    "dQw4w9WgXcQ",
+                    max_retries=2,
+                    retry_delay_seconds=1.5,
+                    _sleep_func=calls.append,
+                    _random_func=lambda: 0.0,
+                )
+
+        self.assertEqual([1.5, 3.0], calls)
+
+    @patch("src.transcript.extractor._extract_info")
+    def test_fetch_transcript_raises_when_no_transcript_available(self, extract_info_mock) -> None:
+        extract_info_mock.return_value = {"subtitles": {}, "automatic_captions": {}}
 
         with self.assertRaisesRegex(
             TranscriptNotAvailableError, "No subtitles available for video dQw4w9WgXcQ"

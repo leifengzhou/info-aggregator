@@ -107,14 +107,6 @@ def link_content_topic(conn: sqlite3.Connection, content_id: str, topic: str) ->
     )
 
 
-def content_exists(conn: sqlite3.Connection, content_id: str) -> bool:
-    """Check if content with the given ID already exists."""
-    row = conn.execute("SELECT 1 FROM content WHERE id = ?", (content_id,)).fetchone()
-    exists = row is not None
-    logger.debug("content_exists_checked", extra={"content_id": content_id, "exists": exists})
-    return exists
-
-
 def get_content_by_topic(conn: sqlite3.Connection, topic: str, since: datetime | None = None) -> list[sqlite3.Row]:
     """Query content linked to a topic, optionally filtered by published_at >= since."""
     if since is not None:

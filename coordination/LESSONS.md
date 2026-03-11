@@ -38,8 +38,20 @@ Shared lessons across all agents. After ANY correction from the user or a mistak
 - Context: The user passed a plan doc with both architect deliverables and an implementation spec labeled "for dev." I implemented src/config.py, src/adapters/youtube.py, and all unit tests — all of which are dev's responsibility per RULES.md and the task lifecycle.
 - Lesson: When a prompt contains both architect and dev sections, only execute the architect section (DECISIONS.md, TASK_BOARD.md, AGENT_ARCHITECT.md, handoff spec). Stop there and hand off. The implementation spec is an input for dev, not a work order for architect. If the user explicitly asks architect to do dev work, confirm before proceeding.
 
+### L-006: Architect handoffs go in AGENT_ARCHITECT.md, not AGENT_DEV.md
+- Date: 2026-03-08
+- Agent: architect
+- Context: When writing a P1-012 handoff for Senior Dev, wrote the structured handoff block into `AGENT_DEV.md` (dev's workspace) instead of `AGENT_ARCHITECT.md` (own workspace). This overwrites content that belongs to the dev agent and crosses a role boundary.
+- Lesson: Each agent owns only their own `AGENT_*.md` file. Architect handoff instructions belong in `AGENT_ARCHITECT.md`. Dev reads that file to pick up work and then updates `AGENT_DEV.md` themselves when they claim the task. Never write into another agent's workspace.
+
 ### L-004: Convert found issues into actionable TASK_BOARD items
 - Date: 2026-03-08
 - Agent: qa
 - Context: Logged an issue for a crash (ISSUE-001) in `AGENT_QA.md` and passed the related task, leaving the bug "open" but not assigned on the main board. The Dev agent only pulls work from the `TASK_BOARD.md` `todo` column, meaning the bug would never be picked up.
 - Lesson: Never log "dead-end" issues in local workspaces. If an issue is found but the current task is still marked as `done`, you MUST explicitly create a new `P<phase>-BUG-XXX` row in the `TASK_BOARD.md` and assign it to the Dev in the `todo` state so the pipeline actually addresses it.
+
+### L-007: Retry scope must include every network phase in a pipeline
+- Date: 2026-03-08
+- Agent: dev
+- Context: In P1-012, I added 429 retry logic around yt-dlp metadata extraction but left subtitle payload downloads on raw `urlopen` without equivalent handling, which caused QA ISSUE-002 (unhandled 429 crash).
+- Lesson: For multi-step network flows, enumerate all external I/O boundaries (discovery, metadata, payload download) and ensure retry/error contracts are applied consistently to each step before handoff.

@@ -71,11 +71,22 @@ class YouTubeAdapter(BaseAdapter):
         feed_fetcher: Callable[[str], str] | None = None,
         transcript_fetcher: Callable[[str], TranscriptResult] | None = None,
         transcript_delay_seconds: float = 1.0,
+        youtube_cookies_file: str | None = None,
+        transcript_max_retries: int = 3,
+        transcript_retry_delay_seconds: float = 60.0,
         sleep_func: Callable[[float], None] | None = None,
         channel_id_resolver: Callable[[str], str] | None = None,
     ) -> None:
         self._feed_fetcher = feed_fetcher or _fetch_feed
-        self._transcript_fetcher = transcript_fetcher or fetch_transcript
+        if transcript_fetcher is not None:
+            self._transcript_fetcher = transcript_fetcher
+        else:
+            self._transcript_fetcher = lambda video_id: fetch_transcript(
+                video_id,
+                cookies_file=youtube_cookies_file,
+                max_retries=transcript_max_retries,
+                retry_delay_seconds=transcript_retry_delay_seconds,
+            )
         self._transcript_delay_seconds = transcript_delay_seconds
         self._sleep = sleep_func or time.sleep
         self._channel_id_resolver = channel_id_resolver or resolve_channel_handle
@@ -189,6 +200,8 @@ def ingest_youtube_source(
     content_root: str | Path,
     since: datetime | None = None,
     transcript_delay_seconds: float = 1.0,
+    youtube_cookies_file: str | None = None,
+    transcript_max_retries: int = 3,
     adapter: YouTubeAdapter | None = None,
 ) -> YouTubeIngestResult:
     """Fetch, persist, and link YouTube items for a single topic/source."""
@@ -197,7 +210,11 @@ def ingest_youtube_source(
         "youtube_ingest_started",
         extra={"topic": topic, "since": since.isoformat() if since else None},
     )
-    active_adapter = adapter or YouTubeAdapter(transcript_delay_seconds=transcript_delay_seconds)
+    active_adapter = adapter or YouTubeAdapter(
+        transcript_delay_seconds=transcript_delay_seconds,
+        youtube_cookies_file=youtube_cookies_file,
+        transcript_max_retries=transcript_max_retries,
+    )
     items = active_adapter.fetch(source_config, since=since)
     output_dir = Path(content_root)
     output_dir.mkdir(parents=True, exist_ok=True)

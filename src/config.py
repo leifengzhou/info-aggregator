@@ -32,7 +32,18 @@ class TopicConfig:
 class AppConfig:
     """Top-level application configuration."""
 
+    settings: "Settings"
     topics: dict[str, TopicConfig]
+
+
+@dataclass(frozen=True)
+class Settings:
+    """Global runtime settings."""
+
+    youtube_transcript_delay_seconds: float = 1.0
+    youtube_transcript_max_retries: int = 3
+    youtube_cookies_file: str | None = None
+    reddit_request_delay_seconds: float = 1.0
 
 
 VALID_DIGEST_FREQUENCIES = {"daily", "weekly", "on-demand"}
@@ -62,6 +73,7 @@ def parse_config(raw_config: Any) -> AppConfig:
     """Validate already-parsed config data."""
 
     config = _expect_mapping(raw_config, "config")
+    settings = _parse_settings(config.get("settings"))
     raw_topics = config.get("topics")
     if raw_topics is None:
         raise ConfigError("config.topics is required")
@@ -79,7 +91,39 @@ def parse_config(raw_config: Any) -> AppConfig:
         topic = _parse_topic(slug, raw_topic, topic_path)
         topics[slug] = topic
 
-    return AppConfig(topics=topics)
+    return AppConfig(settings=settings, topics=topics)
+
+
+def _parse_settings(raw_settings: Any) -> Settings:
+    if raw_settings is None:
+        return Settings()
+
+    settings = _expect_mapping(raw_settings, "config.settings")
+
+    delay = settings.get("youtube_transcript_delay_seconds", 1.0)
+    if not isinstance(delay, (int, float)) or isinstance(delay, bool) or delay < 0:
+        raise ConfigError("config.settings.youtube_transcript_delay_seconds must be a non-negative number")
+
+    max_retries = settings.get("youtube_transcript_max_retries", 3)
+    if not isinstance(max_retries, int) or isinstance(max_retries, bool) or max_retries < 0:
+        raise ConfigError("config.settings.youtube_transcript_max_retries must be a non-negative integer")
+
+    cookies_file = settings.get("youtube_cookies_file")
+    if cookies_file is not None:
+        if not _is_non_empty_string(cookies_file):
+            raise ConfigError("config.settings.youtube_cookies_file must be a non-empty string when provided")
+        cookies_file = cookies_file.strip()
+
+    reddit_delay = settings.get("reddit_request_delay_seconds", 1.0)
+    if not isinstance(reddit_delay, (int, float)) or isinstance(reddit_delay, bool) or reddit_delay < 0:
+        raise ConfigError("config.settings.reddit_request_delay_seconds must be a non-negative number")
+
+    return Settings(
+        youtube_transcript_delay_seconds=float(delay),
+        youtube_transcript_max_retries=max_retries,
+        youtube_cookies_file=cookies_file,
+        reddit_request_delay_seconds=float(reddit_delay),
+    )
 
 
 def _parse_topic(slug: str, raw_topic: Any, path: str) -> TopicConfig:
@@ -179,13 +223,27 @@ def _validate_source_entry(
     elif source_type == "reddit":
         _require_entry_string(entry, "subreddit", path)
 
-        if "sort" in entry:
-            _require_entry_string(entry, "sort", path)
+        sort = entry.get("sort")
+        if sort is not None:
+            normalized_sort = _require_entry_string(entry, "sort", path).lower()
+            if normalized_sort not in {"hot", "new"}:
+                raise ConfigError(f"{path}.sort must be one of: hot, new")
+            entry["sort"] = normalized_sort
 
         if "limit" in entry:
             limit = entry["limit"]
-            if not isinstance(limit, int) or isinstance(limit, bool) or limit <= 0:
-                raise ConfigError(f"{path}.limit must be a positive integer")
+            if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1 or limit > 100:
+                raise ConfigError(f"{path}.limit must be an integer between 1 and 100")
+
+        if "comment_limit" in entry:
+            comment_limit = entry["comment_limit"]
+            if not isinstance(comment_limit, int) or isinstance(comment_limit, bool) or comment_limit < 0:
+                raise ConfigError(f"{path}.comment_limit must be a non-negative integer")
+
+        if "min_score" in entry:
+            min_score = entry["min_score"]
+            if not isinstance(min_score, int) or isinstance(min_score, bool) or min_score < 0:
+                raise ConfigError(f"{path}.min_score must be a non-negative integer")
 
     elif source_type == "rss":
         _require_entry_string(entry, "url", path)

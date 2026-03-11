@@ -8,7 +8,6 @@ from src.db import (
     init_db,
     insert_content,
     link_content_topic,
-    content_exists,
     get_content_by_topic,
     insert_digest,
 )
@@ -74,19 +73,6 @@ class TestInsertContent(unittest.TestCase):
 
         row = self.conn.execute("SELECT published_at FROM content WHERE id = ?", ("offset_item",)).fetchone()
         self.assertEqual("2026-03-01T05:30:00+00:00", row["published_at"])
-
-
-class TestContentExists(unittest.TestCase):
-    def setUp(self):
-        self.conn = init_db(":memory:")
-
-    def tearDown(self):
-        self.conn.close()
-
-    def test_content_exists(self):
-        self.assertFalse(content_exists(self.conn, "vid_001"))
-        insert_content(self.conn, _make_item(), "/data/vid_001.txt")
-        self.assertTrue(content_exists(self.conn, "vid_001"))
 
 
 class TestLinkContentTopic(unittest.TestCase):
